@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "24"
+  PUBLIC_SUPABASE_URL = "https://example.supabase.co"
+  PUBLIC_SUPABASE_ANON_KEY = "placeholder-anon-key"
