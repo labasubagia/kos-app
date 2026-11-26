@@ -1,54 +1,54 @@
-# PRD — Aplikasi Pengelolaan Kos (SaaS)
+# PRD — Boarding House Management App (SaaS)
 
-## Tujuan
-Menyediakan aplikasi **SaaS multi-tenant** untuk mengelola kos: tiap pemilik (tenant) mendapatkan area terisolasi untuk kamar, penyewa, kontrak, tagihan, dan pembayaran. Setiap tenant dapat menambahkan admin (mis. istri/anak).
+## Purpose
+Provide a **SaaS multi-tenant** app to manage boarding houses: each owner (tenant) gets an isolated area for rooms, tenants, contracts, monthly bills, and payments. Each tenant can add admins (e.g., spouse/children).
 
-## Persona & tenant
-- **owner** — pemilik kos. Membuat tenant saat daftar pertama kali. Kelola anggota (tambah/hapus admin) + pengaturan.
-- **admin** (mis. istri/anak) — operasional harian: kamar, penyewa, kontrak, tagihan, pembayaran.
-- Setiap user berada dalam satu atau lebih tenant; data terisolasi per tenant (RLS).
-- Tanpa portal penyewa.
+## Personas & tenancy
+- **owner** — boarding house owner. Creates the tenant at first signup. Manages members (add/remove admins) and settings.
+- **admin** (e.g., spouse/children) — daily operations: rooms, tenant, contracts, bills, payments.
+- Each user belongs to one or more tenants; data is isolated per tenant (RLS).
+- No tenant portal.
 
-## Keputusan Terkonfirmasi
-| Aspek | Keputusan |
+## Confirmed decisions
+| Aspect | Decision |
 |---|---|
-| Arsitektur | SaaS multi-tenant (isolasi per tenant) |
-| Skala | Satu kos per tenant, <20 kamar |
-| Utilitas | Tarif flat, sudah termasuk sewa |
-| Pengguna | owner + admin dalam tenant yang sama |
-| Portal penyewa | Tidak ada — internal saja |
-| Pembayaran | Manual (tunai/transfer), dicatat admin |
-| Env | Staging aktif; prod menyusul |
+| Architecture | SaaS multi-tenant (tenancy isolation) |
+| Scale | One boarding house per tenant, <20 rooms |
+| Utilities | Flat rate, included in rent |
+| Users | Owner + admin within the same tenant |
+| Tenant portal | None — internal only |
+| Payments | Manual (cash/transfer), recorded by admin |
+| Env | Staging active; prod later |
 
-## Fitur
+## Features
 
-### P0 — MVP inti
-- Onboarding: signup → buat tenant → owner; undang admin (via email-invite, auth).
-- Kelola kamar: CRUD + status (Kosong / Dipesan / Terisi / Perbaikan).
-- Kelola penyewa: CRUD + riwayat kontrak.
-- Kontrak: check-in, perpanjang, check-out (terminasi).
-- Tagihan bulanan: generate otomatis per kamar aktif per bulan.
-- Pembayaran: catat penuh/sebagian per periode, validasi berlebih.
-- Lacak tunggakan.
-- Dashboard: okupansi, pemasukan bulanan, daftar tunggakan, kontrak hampir berakhir.
-- Kelola anggota (owner): tambah/hapus admin.
+### P0 — MVP core
+- Onboarding: signup → create tenant → owner; invite admin (email-invite via auth).
+- Manage rooms: CRUD + status (Available / Reserved / Occupied / Maintenance).
+- Manage renters: CRUD + contract history.
+- Contracts: check-in, extend, check-out (terminate).
+- Monthly bills: auto-generated per active room per month.
+- Payments: record full/partial per period, validate overpayment.
+- Track arrears.
+- Dashboard: occupancy, monthly income, arrears list, contracts expiring soon.
+- Member management (owner): add/remove admins.
 
 ### P1
-- Arsip laporan pemasukan per bulan/tahun.
-- Ekspor CSV (penyewa, pembayaran, tunggakan).
-- Kwitansi ringkas (tampilan cetak).
+- Income report archive per month/year.
+- CSV export (renters, payments, arrears).
+- Simple receipt (print view).
 
-### P2 (baru jika berkembang)
-- Notifikasi pengingat jatuh tempo (email/WhatsApp).
-- Multi-properti per tenant setelah >1 kos atau >20 kamar.
+### P2 (later, if it grows)
+- Due-date reminders (email/WhatsApp).
+- Multi-property per tenant after >1 house or >20 rooms.
 
-## Di luar lingkup (sekarang)
-- Portal penyewa, pembayaran online/gateway.
-- Pencatatan meter listrik/air.
-- Billing/pembayaran untuk langganan SaaS itu sendiri.
+## Out of scope (for now)
+- Tenant portal, online payment gateway.
+- Utility meter reading.
+- Billing/payment for the SaaS subscription itself.
 
-## Kriteria sukses
-- Data tiap tenant terisolasi penuh (tidak bisa bocor lintas tenant).
-- Semua transaksi tercatat dan bisa dilacak balik.
-- Laporan pemasukan & tunggakan akurat per bulan.
-- Tidak ada kamar terisi tanpa kontrak aktif.
+## Success criteria
+- Each tenant's data fully isolated (no cross-tenant leakage).
+- All transactions recorded and traceable.
+- Income & arrears reports accurate per month.
+- No room becomes occupied without an active contract.

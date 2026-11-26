@@ -1,108 +1,107 @@
 # Data Model
 
-Skema PostgreSQL (Supabase). **Multi-tenant (SaaS)**: setiap owner punya tenant sendiri; semua data milik tenant. Isolasi ditegakkan RLS.
+PostgreSQL schema (Supabase). **Multi-tenant (SaaS)**: each owner has their own tenant; all data belongs to a tenant. Isolation is enforced via RLS.
 
-## `tenants` — unit data per owner
-| Kolom | Tipe | Catatan |
+## `tenants` — data unit per owner
+| Column | Type | Notes |
 |---|---|---|
 | id | pk | |
-| nama | varchar | Nama kos/tenant |
+| name | varchar | Boarding house/tenant name |
 | created_at | timestamptz | Default now() |
 
-## `memberships` — hubung user ↔ tenant + peran
-| Kolom | Tipe | Catatan |
+## `memberships` — user ↔ tenant link + role
+| Column | Type | Notes |
 |---|---|---|
-| user_id | uuid | fk→auth.users; bagian dari PK |
-| tenant_id | uuid | fk→tenants; bagian dari PK |
+| user_id | uuid | fk→auth.users; part of PK |
+| tenant_id | uuid | fk→tenants; part of PK |
 | role | enum | `owner` \| `admin` |
 | created_at | timestamptz | |
 
 - PK `(user_id, tenant_id)`.
-- `owner`: kelola anggota + pengaturan. `admin`: operasional harian (kamar, penyewa, kontrak, tagihan).
+- `owner`: manages members + settings. `admin`: daily operations (rooms, renters, contracts, bills).
 
-## Tabel bisnis
-Semua tabel data membawa **`tenant_id`** (fk→tenants):
-`kamar`, `penyewa`, `kontrak`, `tagihan`, `pembayaran`.
+## Business tables
+All data tables carry **`tenant_id`** (fk→tenants): `rooms`, `renters`, `contracts`, `bills`, `payments`.
 
-### `kamar`
-| Kolom | Tipe | Catatan |
+### `rooms`
+| Column | Type | Notes |
 |---|---|---|
 | id | pk | |
 | tenant_id | uuid | fk→tenants |
-| nama | varchar | Nomor/nama kamar, unik per tenant |
-| tipe | enum | `regular` \| `vip` |
-| kapasitas | int | Default 1 |
-| harga_sewa | numeric | Rupiah/bulan |
-| status | enum | `kosong` \| `dipesan` \| `terisi` \| `perbaikan` |
+| name | varchar | Room number/name, unique per tenant |
+| type | enum | `regular` \| `vip` |
+| capacity | int | Default 1 |
+| monthly_rent | numeric | IDR/month |
+| status | enum | `available` \| `reserved` \| `occupied` \| `maintenance` |
 
-### `penyewa`
-| Kolom | Tipe | Catatan |
+### `renters`
+| Column | Type | Notes |
 |---|---|---|
 | id | pk | |
 | tenant_id | uuid | fk→tenants |
-| nama | varchar | |
-| no_hp | varchar | |
+| name | varchar | |
+| phone | varchar | |
 | email | varchar | nullable |
-| nik | varchar | nullable, opsional |
-| catatan | text | nullable |
+| nik | varchar | nullable, optional |
+| notes | text | nullable |
 
-### `kontrak`
-| Kolom | Tipe | Catatan |
+### `contracts`
+| Column | Type | Notes |
 |---|---|---|
 | id | pk | |
 | tenant_id | uuid | fk→tenants |
-| penyewa_id | fk→penyewa | |
-| kamar_id | fk→kamar | |
-| mulai | date | Tanggal check-in |
-| berakhir | date | nullable; null = tanpa batas |
-| sewa_bulanan | numeric | |
-| deposit | numeric | Uang jaminan |
-| jatuh_tempo | int | Tanggal; default 1 |
-| masa_tenggang_hari | int | Default 0 (bisa 7) |
-| denda_per_periode | numeric | Default 0 |
-| aktif | bool | Satu-satunya aktif per kamar |
+| renter_id | fk→renters | |
+| room_id | fk→rooms | |
+| start_date | date | Check-in date |
+| end_date | date | nullable; null = indefinite |
+| monthly_rent | numeric | |
+| deposit | numeric | Security deposit |
+| due_day | int | Day of month; default 1 |
+| grace_days | int | Default 0 (can be 7) |
+| late_fee_per_period | numeric | Default 0 |
+| active | bool | The single active one per room |
 
-### `tagihan`
-| Kolom | Tipe | Catatan |
+### `bills`
+| Column | Type | Notes |
 |---|---|---|
 | id | pk | |
 | tenant_id | uuid | fk→tenants |
-| kontrak_id | fk→kontrak | |
-| periode | varchar | `YYYY-MM` |
-| jumlah | numeric | Sewa + denda |
-| jatuh_tempo | date | |
-| status | enum | `belum_lunas` \| `sebagian` \| `lunas` |
+| contract_id | fk→contracts | |
+| period | varchar | `YYYY-MM` |
+| amount | numeric | Rent + late fee |
+| due_date | date | |
+| status | enum | `unpaid` \| `partial` \| `paid` |
 
-### `pembayaran`
-| Kolom | Tipe | Catatan |
+### `payments`
+| Column | Type | Notes |
 |---|---|---|
 | id | pk | |
 | tenant_id | uuid | fk→tenants |
-| tagihan_id | fk→tagihan | |
-| tanggal | date | |
-| jumlah | numeric | >0 |
-| metode | enum | `tunai` \| `transfer` |
-| catatan | text | nullable |
+| bill_id | fk→bills | |
+| date | date | |
+| amount | numeric | >0 |
+| method | enum | `cash` \| `transfer` |
+| notes | text | nullable |
 
-## Relasi
+## Relations
 ```mermaid
 erDiagram
     TENANTS ||--o{ MEMBERSHIPS : "user↔tenant"
-    TENANTS ||--o{ KAMAR : ""
-    KAMAR ||--o{ KONTRAK : "1 aktif"
-    PENYEWA ||--o{ KONTRAK : ""
-    KONTRAK ||--o{ TAGIHAN : ""
-    TAGIHAN ||--o{ PEMBAYARAN : ""
+    TENANTS ||--o{ ROOMS : ""
+    ROOMS ||--o{ CONTRACTS : "1 active"
+    RENTERS ||--o{ CONTRACTS : ""
+    CONTRACTS ||--o{ BILLS : ""
+    BILLS ||--o{ PAYMENTS : ""
 ```
 
-## Keamanan (RLS)
-- **Tabel bisnis**: policy `tenant_id IN (SELECT tenant_id FROM memberships WHERE user_id = auth.uid())`.
-- **`memberships`**: anggota bisa membaca membership tenant-nya; hanya `owner` boleh insert/delete (kelola admin). Update role hanya owner.
-- **`tenants`**: dapat dibaca user yang jadi anggota tenant itu.
-- **Bootstrap**: user pertama → buat tenant + row membership role `owner`; `admin` ditambah oleh owner.
-- `tenant_id` di tabel bisnis: default dari tenant milik user; tidak bisa diubah ke tenant lain.
+## Security (RLS)
+- **Business tables**: policy `tenant_id IN (SELECT tenant_id FROM memberships WHERE user_id = auth.uid())`.
+- **`memberships`**: members can read their tenant's memberships; only `owner` may insert/delete (manage admins). Role updates owner-only.
+- **`tenants`**: readable by users who are members.
+- **Bootstrap**: first user → create tenant + membership row with role `owner`; `admin` added by owner.
+- `tenant_id` on business tables: defaults from the user's tenant; cannot be changed to another tenant.
 
-## Catatan integritas
-- `kontrak.aktif` + **partial unique index** pada `(kamar_id, tenant_id) WHERE aktif` → invariant 1-kontrak-aktif per tenant.
-- `tagihan` unik pada `(kontrak_id, periode)`.
-- Status `kamar` dipertahankan sinkron via logika aplikasi saat buka/tutup kontrak.
+## Integrity notes
+- `contracts.active` + **partial unique index** on `(room_id, tenant_id) WHERE active` → guarantees the 1-active-contract invariant per tenant.
+- `bills` unique on `(contract_id, period)`.
+- Room `status` kept in sync via application logic when opening/closing contracts.

@@ -1,38 +1,38 @@
-# Business Rules — Pengelolaan Kos
+# Business Rules — Boarding House Management
 
-## Aturan inti (invariant)
-1. **Satu kontrak aktif per kamar.** Dua kontrak aktif tidak boleh menunjuk kamar sama.
-2. **Check-in** hanya boleh pada kamar berstatus `Kosong`. Berhasil → kamar menjadi `Terisi`.
-3. **Check-out / terminasi** menutup kontrak aktif → kamar menjadi `Kosong`.
-4. **Deposit (uang jaminan)** diterima saat check-in; dikembalikan saat check-out dikurangi tunggakan dan potongan kerusakan.
-5. **Tagihan bulanan** dibuat satu per kontrak aktif per periode (bulan). Jumlah = sewa bulanan + denda jika periode sebelumnya belum lunas lewat masa tenggang.
+## Core invariants
+1. **One active contract per room.** Two active contracts must never reference the same room.
+2. **Check-in** is only allowed on a room with status `Available`. On success the room becomes `Occupied`.
+3. **Check-out / termination** closes the active contract → the room becomes `Available`.
+4. **Deposit (security deposit)** is received at check-in; returned at check-out minus arrears and damage deductions.
+5. **Monthly bill** is created one per active contract per period (month). Amount = monthly rent + late fee if the previous period was unpaid past the grace period.
 
-## Status kamar
+## Room status
 ```
-Kosong → Dipesan → Terisi → Kosong
-Kosong → Perbaikan → Kosong
+Available → Reserved → Occupied → Available
+Available → Maintenance → Available
 ```
-Transformasi hanya via kontrak (Terisi) atau tindakan admin (Kosong/Perbaikan).
+Transitions happen only via contracts (Occupied) or admin action (Available/Maintenance).
 
-## Tagihan & pembayaran
-- Satu tagihan per periode per kontrak. Periode ditandai `tahun-bulan`.
-- Pembayaran **bisa sebagian**. Status tagihan: `Belum Lunas` / `Sebagian` / `Lunas`.
-- Pembayaran diterapkan ke tagihan terlama yang belum lunas lebih dulu (FIFO).
-- **Tunggakan** = total saldo tagihan terbuka (periode belum lunas).
-- **Denda**: berlaku jika lewat `jatuh_tempo + masa_tenggang`. Formula konfigurasi (mis. Rp/hari atau flat per bulan).
+## Bills & payments
+- One bill per period per contract. Period is marked `year-month`.
+- Payments **can be partial**. Bill status: `Unpaid` / `Partial` / `Paid`.
+- Payments are applied to the oldest unpaid bill first (FIFO).
+- **Arrears** = total open balance of unpaid bills (unpaid periods).
+- **Late fee**: applies if past `due_date + grace_period`. Configurable formula (e.g., IDR/day or flat per month).
 
-## Perhitungan deposit saat check-out
+## Deposit calculation at check-out
 ```
-Pengembalian = Deposit − (Σ tunggakan) − potongan kerusakan
+Refund = Deposit − (Σ arrears) − damage deductions
 ```
-Harus ≥ 0; jika negatif, penyewa menanggung sisanya.
+Must be ≥ 0; if negative, the renter covers the remainder.
 
-## Laporan
-- **Okupansi** = kamar Terisi ÷ total kamar.
-- **Pemasukan bulanan** = Σ pembayaran pada bulan itu.
-- **Peringatan kontrak** = kontrak aktif yang `berakhir` dalam 30/60 hari (atau tanpa tanggal berakhir).
+## Reports
+- **Occupancy** = occupied rooms ÷ total rooms.
+- **Monthly income** = Σ payments in that month.
+- **Contract alerts** = active contracts ending within 30/60 days (or with no end date).
 
-## Validasi input
-- Tanggal check-out ≥ tanggal check-in.
-- Jumlah pembayaran > 0.
-- Tidak boleh ada pembayaran melampaui total saldo tagihan (tolak berlebih, atau catat sebagai saldo muka bila disetujui).
+## Input validation
+- Check-out date ≥ check-in date.
+- Payment amount > 0.
+- No payment may exceed the total bill balance (reject overpayment, or record as advance balance if approved).

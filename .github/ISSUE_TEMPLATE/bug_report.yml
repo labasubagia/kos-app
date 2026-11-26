@@ -1,48 +1,48 @@
 name: Bug Report
-description: Laporkan bug/defect
+description: Report a bug/defect
 title: "fix: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Terima kasih melaporkan. Lengkapi semua bagian.
+        Thanks for reporting. Fill out all sections.
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: Apa yang terjadi, ringkas
-      placeholder: e.g. Halaman tagihan blank setelah pilih bulan
+      description: What happens, concise
+      placeholder: e.g. Bills page is blank after selecting a month
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: Steps to Reproduce
-      description: Langkah untuk memunculkan bug
+      description: Steps that trigger the bug
       placeholder: |
-        1. Login sebagai owner
-        2. Buka Tagihan
-        3. Pilih periode Jan 2026
+        1. Log in as owner
+        2. Open Bills
+        3. Select period Jan 2026
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
       label: Expected Behavior
-      description: Apa yang seharusnya terjadi
+      description: What should happen
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
       label: Actual Behavior
-      description: Apa yang benar-benar terjadi
+      description: What actually happens
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Browser/OS, akun (owner/admin), env (staging/prod)
+      description: Browser/OS, account (owner/admin), env (staging/prod)
       placeholder: Chrome 120, Windows, staging, owner1

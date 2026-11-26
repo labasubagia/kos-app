@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Overview
-SaaS multi-tenant web app for boarding-house management (rooms, tenants, contracts, monthly bills, payments). Each owner (tenant) gets an isolated data area and can add admins (e.g., spouse/children). **Status: planning phase** — the repo holds design docs (`docs/`), no code yet. This AGENTS.md captures the blueprint to follow once scaffolding begins.
+SaaS multi-tenant web app for boarding-house management (rooms, tenants, contracts, monthly bills, payments). Each owner (tenant) gets an isolated data area and can add admins (e.g., spouse/children). **Status: planning phase** — the repo holds design docs (`docs/`), no code yet. This AGENTS.md captures the blueprint to follow once scaffolding begins. **Language: the entire development process is in English** — docs, issues, PRs, commits, code, comments, and discussions. Only end-user-facing UI strings/data are Indonesian.
 
 ## Architecture & Data Flow
 - **Frontend**: SvelteKit + `adapter-static` → static artifacts on GitHub Pages (prod) / Netlify (staging). No app server.
@@ -41,6 +41,7 @@ git push origin main      # → GitHub Pages (prod)
 - **Status tracking**: GitHub Projects (3-column board) — *Todo / In Progress / Done*. Assign the issue, drag columns.
 - **Prod release**: tag `v*` → GitHub Actions → GitHub Pages.
 - Supabase migrations handled per PR (`supabase db diff`); review before merge.
+- **Merge policy**: never merge a PR without explicit user approval. Propose the PR, then wait for the user to approve before merging.
 
 ## Code Conventions & Common Patterns
 - **Naming**: kebab-case tables/emails, lowercase enum types (`kosong`, `owner`).
@@ -48,7 +49,7 @@ git push origin main      # → GitHub Pages (prod)
 - **Async**: SvelteKit `load` functions + `supabase` client; `await` all queries.
 - **State management**: props/events + small stores; avoid complex stores (YAGNI).
 - **Tenant context**: inject `tenant_id` from user session (via `memberships`); never hardcode.
-- **Format & language**: English code/identifiers; Indonesian data & UI (Rupiah, `Y-m-d`).
+- **Format & language**: English for every development artifact — code, identifiers, comments, commits, issues, PRs, docs, discussions. Indonesian only in end-user UI strings & data (IDR, `Y-m-d`).
 
 ## Important Files
 - `docs/03-data-model.md` — authoritative schema (tenants, memberships, kamar, penyewa, kontrak, tagihan, pembayaran).

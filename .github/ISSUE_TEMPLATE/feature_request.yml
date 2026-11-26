@@ -1,33 +1,33 @@
 name: Feature Request
-description: Usulkan fitur/perbaikan baru
+description: Propose a new feature or improvement
 title: "feat: "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Usulkan dengan jelas: masalah apa yang dipecahkan dan kriteria sukses.
+        Propose clearly: what problem it solves and success criteria.
   - type: textarea
     id: goal
     attributes:
       label: Goal
-      description: Masalah apa yang dipecahkan
-      placeholder: e.g. Generate tagihan bulanan otomatis
+      description: What problem this solves
+      placeholder: e.g. Generate monthly bills automatically
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
       label: Acceptance Criteria
-      description: Kondisi terukur yang menandakan fitur selesai
+      description: Measurable conditions marking the feature complete
       placeholder: |
-        - [ ] Tagihan muncul untuk tiap kontrak aktif per periode
-        - [ ] Tidak membuat tagihan ganda
+        - [ ] A bill appears for each active contract per period
+        - [ ] No duplicate bills are created
     validations:
       required: true
   - type: textarea
     id: scope
     attributes:
       label: Scope & Non-Goals
-      description: Yang termasuk dan sengaja dikecualikan
-      placeholder: Non-goal: multi-properti, portal penyewa
+      description: What's included and intentionally excluded
+      placeholder: Non-goal: multi-property, tenant portal
