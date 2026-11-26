@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
-	import { Building2, Users, FileText, Receipt, Wallet, LayoutDashboard } from "@lucide/svelte";
+	import { Building2, MapPin, Users, FileText, Receipt, Wallet, LayoutDashboard } from "@lucide/svelte";
 	import { tenant, user, requireAuth, signOut } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Avatar, AvatarFallback, AvatarImage } from "$lib/components/ui/avatar";
@@ -19,6 +19,8 @@
 
 	const nav = [
 		{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+		{ href: "/locations", label: "Locations", icon: MapPin },
+		{ href: "/buildings", label: "Buildings", icon: Building2 },
 		{ href: "/rooms", label: "Rooms", icon: Building2 },
 		{ href: "/renters", label: "Renters", icon: Users },
 		{ href: "/contracts", label: "Contracts", icon: FileText },
