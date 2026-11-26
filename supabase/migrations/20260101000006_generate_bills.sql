@@ -59,7 +59,7 @@ grant execute on function public.generate_bills(text) to service_role;
 do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
-    perform cron.schedule('generate-bills-monthly', '30 0 1 * *', $$select public.generate_bills()$$);
+    perform cron.schedule('generate-bills-monthly', '30 0 1 * *', $cron$select public.generate_bills()$cron$);
   end if;
 end;
 $$;
