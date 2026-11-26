@@ -4,6 +4,7 @@
 	import { onMount } from "svelte";
 	import { Plus, Pencil, Trash2, Download } from "@lucide/svelte";
 	import { downloadCsv, toCsv, todayStamp } from "$lib/csv";
+	import { tenant } from "$lib/stores/auth.svelte";
 	import { supabase } from "$lib/supabase";
 	import * as Table from "$lib/components/ui/table";
 	import * as Dialog from "$lib/components/ui/dialog";
@@ -97,6 +98,7 @@
 			return;
 		}
 		const payload = {
+			tenant_id: $tenant?.tenantId,
 			name: trimmedName,
 			phone: trimmedPhone,
 			email: email.trim() || null,
