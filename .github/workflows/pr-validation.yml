@@ -1,0 +1,52 @@
+name: PR Template Validation
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, ready_for_review]
+permissions:
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+
+            const required = [
+              "Description",
+              "Type of change",
+              "Changes",
+              "Testing",
+              "Checklist",
+            ];
+
+            // Heading may be followed by a description in parentheses (e.g. "Description")
+            const has = (h) => new RegExp(`^##\\s+${h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m").test(body);
+            const missing = required.filter((h) => !has(h));
+
+            const label = "invalid";
+            const prNumber = context.payload.pull_request.number;
+            const { data: labels } = await github.rest.issues.listLabelsForIssue({
+              ...context.repo, issue_number: prNumber,
+            });
+            const hasInvalid = labels.some((l) => l.name === label);
+
+            if (missing.length) {
+              if (!hasInvalid) {
+                await github.rest.issues.addLabels({
+                  ...context.repo, issue_number: prNumber, labels: [label],
+                });
+              }
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: prNumber,
+                body: `⚠️ PR does not match the template. Missing sections: ${missing.join(", ")}. Please fill them in.`,
+              });
+            } else if (hasInvalid) {
+              await github.rest.issues.removeLabel({
+                ...context.repo, issue_number: prNumber, name: label,
+              });
+            }
