@@ -34,6 +34,14 @@ git push origin staging   # → Netlify
 git push origin main      # → GitHub Pages (prod)
 ```
 
+## Development Workflow (GitHub)
+- **Every task** (feature, bug, refactor) → create an **Issue** first with a label (`bug`, `enhancement`, `chore`, `docs`). Tiny typo/doc fixes may go straight to PR without an issue.
+- **Branching**: `feat/<desc>` / `fix/<desc>` off `main`; PR required. Link the PR to its issue (`fixes #<id>` → auto-close).
+- **PR** → Netlify deploy preview + CI (`svelte-check`, lint). Review before merging to `main`.
+- **Status tracking**: GitHub Projects (3-column board) — *Todo / In Progress / Done*. Assign the issue, drag columns.
+- **Prod release**: tag `v*` → GitHub Actions → GitHub Pages.
+- Supabase migrations handled per PR (`supabase db diff`); review before merge.
+
 ## Code Conventions & Common Patterns
 - **Naming**: kebab-case tables/emails, lowercase enum types (`kosong`, `owner`).
 - **Error handling**: guardrails client-side; final integrity in DB (RLS + constraints). No empty try/catch.
