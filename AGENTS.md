@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Overview
-SaaS multi-tenant web app for boarding-house management (rooms, tenants, contracts, monthly bills, payments). Each owner (tenant) gets an isolated data area and can add admins (e.g., spouse/children). **Status: planning phase** — the repo holds design docs (`docs/`), no code yet. This AGENTS.md captures the blueprint to follow once scaffolding begins. **Language: the entire development process is in English** — docs, issues, PRs, commits, code, comments, and discussions. Only end-user-facing UI strings/data are Indonesian.
+SaaS multi-tenant web app for boarding-house management (rooms, tenants, contracts, monthly bills, payments). Each owner (tenant) gets an isolated data area and can add admins (e.g., spouse/children). **Status: scaffolded** — SvelteKit + Tailwind + shadcn-svelte + Supabase client live (PR #6); feature work follows. **Language: the entire development process is in English** — docs, issues, PRs, commits, code, comments, and discussions. Only end-user-facing UI strings/data are Indonesian.
 
 ## Architecture & Data Flow
 - **Frontend**: SvelteKit + `adapter-static` → static artifacts on GitHub Pages (prod) / Netlify (staging). No app server.
@@ -21,11 +21,13 @@ SaaS multi-tenant web app for boarding-house management (rooms, tenants, contrac
 - (Planned) `src/` — SvelteKit; `supabase/` — SQL migrations + Edge Functions; `src/lib/components/ui/` — shadcn-svelte.
 
 ## Development Commands
-None yet (planning phase). On scaffold:
 ```bash
-# scaffold SvelteKit + Tailwind + shadcn-svelte
-npm create svelte@latest .
-npx shadcn-svelte@latest init
+# scaffold SvelteKit (sv CLI, successor to create-svelte)
+npx sv create . --template minimal --types ts --no-add-ons
+# Tailwind + shadcn-svelte
+npx shadcn-svelte@latest init --preset vega --base-color neutral --css src/app.css
+# lint/format (Rust): oxlint + oxvelte (.svelte) + oxfmt
+npm run lint && npm run format
 # Supabase migrations (per env)
 supabase link --project-ref <staging|prod>
 supabase db push
@@ -36,7 +38,7 @@ git push origin main      # → GitHub Pages (prod)
 
 ## Development Workflow (GitHub)
 - **Every task** (feature, bug, refactor) → create an **Issue** first with a label (`bug`, `enhancement`, `chore`, `docs`). Tiny typo/doc fixes may go straight to PR without an issue.
-- **Branching**: `feat/<desc>` / `fix/<desc>` off `main`; PR required. Link the PR to its issue (`fixes #<id>` → auto-close).
+- **Branching**: `feat/<desc>` / `fix/<desc>` off `main`; PR required. The PR body MUST include the closing keyword `fixes #<id>` (or `closes #<id>`) for its issue so GitHub auto-closes it on merge; otherwise the issue stays open after merge.
 - **PR** → Netlify deploy preview + CI (`svelte-check`, lint). Review before merging to `main`.
 - **Status tracking**: GitHub Projects (3-column board) — *Todo / In Progress / Done*. Assign the issue, drag columns.
 - **Prod release**: tag `v*` → GitHub Actions → GitHub Pages.
@@ -60,7 +62,7 @@ git push origin main      # → GitHub Pages (prod)
 - **Runtime**: Node (LTS) + npm; SvelteKit via Vite.
 - **Package manager**: npm.
 - **DB**: PostgreSQL (Supabase).
-- **Tooling**: Supabase CLI for migrations; GitHub Actions for CI/deploy; shadcn-svelte (Tailwind) for UI.
+- **Tooling**: Supabase CLI for migrations; GitHub Actions for CI/deploy; shadcn-svelte (Tailwind) for UI; oxlint/oxvelte/oxfmt (Rust) for lint/format.
 
 ## Testing & QA
 - Planning phase: no test suite yet.
