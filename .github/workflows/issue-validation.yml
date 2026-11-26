@@ -1,0 +1,56 @@
+name: Issue Template Validation
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || "";
+
+            const expectations = {
+              bug:     ["Description", "Steps to Reproduce", "Expected Behavior", "Actual Behavior"],
+              feature:  ["Goal", "Acceptance Criteria", "Scope & Non-Goals"],
+              chore:   ["Context", "Task Breakdown"],
+            };
+
+            const has = (h) => body.includes(`### ${h}`);
+
+            // Tebak template dengan skor kecocokan tertinggi
+            let best = null, bestScore = -1, missingOfBest = [];
+            for (const [t, heads] of Object.entries(expectations)) {
+              const missing = heads.filter((h) => !has(h));
+              const score = heads.length - missing.length;
+              if (score > bestScore) { bestScore = score; best = t; missingOfBest = missing; }
+            }
+
+            const label = "invalid";
+            const { data: labels } = await github.rest.issues.listLabelsForIssue({
+              ...context.repo, issue_number: context.issue.number,
+            });
+            const hasInvalid = labels.some((l) => l.name === label);
+
+            if (missingOfBest.length) {
+              if (!hasInvalid) {
+                await github.rest.issues.addLabels({
+                  ...context.repo, issue_number: context.issue.number, labels: [label],
+                });
+              }
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body: `⚠️ Issue tidak sesuai template \`${best}\`. Bagian hilang: ${missingOfBest.join(", ")}. Mohon lengkapi agar dapat diproses.`,
+              });
+            } else if (hasInvalid) {
+              await github.rest.issues.removeLabel({
+                ...context.repo, issue_number: context.issue.number, name: label,
+              });
+            }
