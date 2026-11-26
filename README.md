@@ -1,56 +1,40 @@
-# sv
+# kos-app
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SaaS multi-tenant boarding-house management app. SvelteKit (Svelte 5, runes) + TypeScript + Tailwind CSS v4 + shadcn-svelte + Supabase. Free stack, single source repo.
 
-## Creating a project
+## Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Framework**: SvelteKit (`adapter-static` → static site)
+- **UI**: Tailwind CSS v4 (`@tailwindcss/vite`), shadcn-svelte (vega preset)
+- **Lint/format**: oxlint + oxvelte (Svelte) + oxfmt (Rust)
+- **Backend**: Supabase (Postgres + Auth + RLS + Edge Functions)
 
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+## Setup
 
 ```sh
-# recreate this project
-npx sv@1.7.1 create --template minimal --types ts --install npm .
-```
-
-## Adding features
-
-Add features to your project with `sv add`:
-
-```sh
-npx sv add
-```
-
-For example, to add Tailwind CSS:
-
-```sh
-npx sv add tailwindcss
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+npm install
+cp .env.example .env   # fill with real Supabase values
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Env vars are declared in `src/env.ts` via `defineEnvVars`. Public (`PUBLIC_*`) vars are inlined from `.env`; private vars go to `$app/env/private`.
 
-To create a production version of your app:
+## Scripts
 
-```sh
-npm run build
-```
+| Command | Action |
+| --- | --- |
+| `npm run dev` | dev server |
+| `npm run build` | production build → `build/` (adapter-static) |
+| `npm run preview` | preview production build |
+| `npm run check` | svelte-check |
+| `npm run lint` | oxlint + oxvelte |
+| `npm run format` / `format:check` | oxfmt write / check |
 
-You can preview the production build with `npm run preview`.
+## Deploy
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- Staging: Netlify (`netlify.toml`)
+- Production: GitHub Pages
+
+## Docs
+
+See `docs/` (PRD, business rules, data model, tech stack, roadmap, deployment).
