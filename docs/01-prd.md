@@ -17,7 +17,7 @@ Provide a **SaaS multi-tenant** app to manage boarding houses: each owner (tenan
 | Utilities | Flat rate, included in rent |
 | Users | Owner + admin within the same tenant |
 | Tenant portal | None — internal only |
-| Payments | Manual (cash/transfer), recorded by admin |
+| Scale | Hierarchy tenant → location → building → room. Current: 1 location, 3 gedung (A 5, B 5, C 1 rooms, 11 total); <20 rooms overall |
 | Env | Staging active; prod later |
 
 ## Features

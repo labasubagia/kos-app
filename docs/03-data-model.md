@@ -21,14 +21,30 @@ PostgreSQL schema (Supabase). **Multi-tenant (SaaS)**: each owner has their own 
 - `owner`: manages members + settings. `admin`: daily operations (rooms, renters, contracts, bills).
 
 ## Business tables
-All data tables carry **`tenant_id`** (fk→tenants): `rooms`, `renters`, `contracts`, `bills`, `payments`.
+All data tables carry **`tenant_id`** (fk→tenants): `locations`, `buildings`, `rooms`, `renters`, `contracts`, `bills`, `payments`.
+
+### `locations`
+| Column | Type | Notes |
+|---|---|---|
+| id | pk | |
+| tenant_id | uuid | fk→tenants |
+| name | varchar | Location/property name; unique per tenant |
+
+### `buildings`
+| Column | Type | Notes |
+|---|---|---|
+| id | pk | |
+| tenant_id | uuid | fk→tenants |
+| location_id | uuid | fk→locations |
+| name | varchar | Building name within location; unique per location |
 
 ### `rooms`
 | Column | Type | Notes |
 |---|---|---|
 | id | pk | |
 | tenant_id | uuid | fk→tenants |
-| name | varchar | Room number/name, unique per tenant |
+| name | varchar | Room number/name, unique per tenant+building |
+| building_id | uuid | fk→buildings; room name unique per building |
 | type | enum | `regular` \| `vip` |
 | capacity | int | Default 1 |
 | monthly_rent | numeric | IDR/month |
@@ -41,7 +57,6 @@ All data tables carry **`tenant_id`** (fk→tenants): `rooms`, `renters`, `contr
 | tenant_id | uuid | fk→tenants |
 | name | varchar | |
 | phone | varchar | |
-| email | varchar | nullable |
 | nik | varchar | nullable, optional |
 | notes | text | nullable |
 
@@ -87,7 +102,9 @@ All data tables carry **`tenant_id`** (fk→tenants): `rooms`, `renters`, `contr
 ```mermaid
 erDiagram
     TENANTS ||--o{ MEMBERSHIPS : "user↔tenant"
-    TENANTS ||--o{ ROOMS : ""
+    TENANTS ||--o{ LOCATIONS : ""
+    LOCATIONS ||--o{ BUILDINGS : ""
+    BUILDINGS ||--o{ ROOMS : ""
     ROOMS ||--o{ CONTRACTS : "1 active"
     RENTERS ||--o{ CONTRACTS : ""
     CONTRACTS ||--o{ BILLS : ""
@@ -100,6 +117,7 @@ erDiagram
 - **`tenants`**: readable by users who are members.
 - **Bootstrap**: first user → create tenant + membership row with role `owner`; `admin` added by owner.
 - `tenant_id` on business tables: defaults from the user's tenant; cannot be changed to another tenant.
+- `locations`/`buildings` follow the same membership policy as business tables.
 
 ## Integrity notes
 - `contracts.active` + **partial unique index** on `(room_id, tenant_id) WHERE active` → guarantees the 1-active-contract invariant per tenant.
