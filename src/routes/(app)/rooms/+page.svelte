@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import { supabase } from "$lib/supabase";
 	import { toast } from "svelte-sonner";
+	import { tenant } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
@@ -156,6 +157,7 @@
 		if (!validate()) return;
 		submitting = true;
 		const payload = {
+			tenant_id: $tenant?.tenantId,
 			building_id: form.building_id,
 			name: form.name.trim(),
 			type: form.type,
