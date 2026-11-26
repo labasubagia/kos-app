@@ -12,7 +12,8 @@
 	import { toast } from "svelte-sonner";
 	import { depositRefund, isValidContractDates } from "$lib/logic/contracts";
 
-	type Room = { id: string; name: string; status: string };
+	type Building = { name: string; locations: { name: string } };
+	type Room = { id: string; name: string; status: string; buildings: Building | null };
 	type Renter = { id: string; name: string };
 	type Contract = {
 		id: string;
@@ -24,7 +25,7 @@
 		grace_days: number;
 		late_fee_per_period: number;
 		active: boolean;
-		rooms: { name: string };
+		rooms: { name: string; buildings: Building | null };
 		renters: { name: string };
 	};
 
@@ -34,16 +35,18 @@
 	let loading = $state(true);
 
 	const idr = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+	const roomLabel = (r: { name: string; buildings?: Building | null }) =>
+		[r.buildings?.locations?.name, r.buildings?.name, r.name].filter(Boolean).join(" – ");
 
 	async function load() {
 		loading = true;
 		const [c, r, rn] = await Promise.all([
-			supabase.from("contracts").select("*, rooms(name), renters(name)").order("start_date", { ascending: false }),
-			supabase.from("rooms").select("id, name, status").eq("status", "available").order("name"),
+			supabase.from("contracts").select("*, rooms(buildings(locations(name), name), name), renters(name)").order("start_date", { ascending: false }),
+			supabase.from("rooms").select("id, name, status, buildings(locations(name), name)").eq("status", "available").order("name"),
 			supabase.from("renters").select("id, name").order("name"),
 		]);
-		contracts = (c.data ?? []) as Contract[];
-		rooms = (r.data ?? []) as Room[];
+		contracts = (c.data ?? []) as unknown as Contract[];
+		rooms = (r.data ?? []) as unknown as Room[];
 		renters = (rn.data ?? []) as Renter[];
 		loading = false;
 	}
@@ -198,7 +201,7 @@
 					{#each contracts as c (c.id)}
 						<Table.Row>
 							<Table.Cell class="font-medium">{c.renters.name}</Table.Cell>
-							<Table.Cell>{c.rooms.name}</Table.Cell>
+							<Table.Cell>{roomLabel(c.rooms)}</Table.Cell>
 							<Table.Cell>{c.start_date}</Table.Cell>
 							<Table.Cell>{c.end_date ?? "—"}</Table.Cell>
 							<Table.Cell class="text-right">{idr(c.monthly_rent)}</Table.Cell>
@@ -238,7 +241,10 @@
 				<div class="grid gap-2">
 					<Label.Root>Renter</Label.Root>
 					<Select.Root type="single" bind:value={ciRenter}>
-						<Select.Trigger class="w-full"><Select.Value placeholder="Select renter" /></Select.Trigger>
+						<Select.Trigger class="w-full">
+							{@const sel = renters.find((x) => x.id === ciRenter)}
+							{sel?.name ?? "Select renter"}
+						</Select.Trigger>
 						<Select.Content>
 							{#each renters as r}
 								<Select.Item value={r.id}>{r.name}</Select.Item>
@@ -249,10 +255,13 @@
 				<div class="grid gap-2">
 					<Label.Root>Room</Label.Root>
 					<Select.Root type="single" bind:value={ciRoom}>
-						<Select.Trigger class="w-full"><Select.Value placeholder="Select available room" /></Select.Trigger>
+						<Select.Trigger class="w-full">
+							{@const sel = rooms.find((x) => x.id === ciRoom)}
+							{sel ? roomLabel(sel) : "Select available room"}
+						</Select.Trigger>
 						<Select.Content>
 							{#each rooms as r}
-								<Select.Item value={r.id}>{r.name}</Select.Item>
+								<Select.Item value={r.id}>{roomLabel(r)}</Select.Item>
 							{/each}
 						</Select.Content>
 					</Select.Root>

@@ -218,7 +218,10 @@
 				<div class="grid gap-2">
 					<Label.Root>Contract</Label.Root>
 					<Select.Root type="single" bind:value={payContract}>
-						<Select.Trigger class="w-full"><Select.Value placeholder="Select contract with balance" /></Select.Trigger>
+						<Select.Trigger class="w-full">
+							{@const sel = contracts.find((x) => x.id === payContract)}
+							{sel ? `${sel.label} — ${idr(sel.outstanding)}` : "Select contract with balance"}
+						</Select.Trigger>
 						<Select.Content>
 							{#each contracts as c}
 								<Select.Item value={c.id}>{c.label} — {idr(c.outstanding)}</Select.Item>
