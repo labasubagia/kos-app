@@ -4,5 +4,5 @@
 
 [build.environment]
   NODE_VERSION = "24"
-  PUBLIC_SUPABASE_URL = "https://example.supabase.co"
-  PUBLIC_SUPABASE_ANON_KEY = "placeholder-anon-key"
+  PUBLIC_SUPABASE_URL = "https://kezznnslybhygpwqxlhg.supabase.co"
+  PUBLIC_SUPABASE_ANON_KEY = "set-in-netlify-dashboard"
