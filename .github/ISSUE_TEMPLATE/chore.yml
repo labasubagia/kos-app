@@ -1,0 +1,24 @@
+name: Chore / Task
+description: Tugas internal, refactor, maintenance
+title: "chore: "
+labels: ["chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tugas non-fitur: refactor, teknis, dokumentasi.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Latar belakang/alasan
+    validations:
+      required: true
+  - type: textarea
+    id: breakdown
+    attributes:
+      label: Task Breakdown
+      description: Langkah konkret
+      placeholder: |
+        - [ ] Ganti helper X
+        - [ ] Perbarui test
