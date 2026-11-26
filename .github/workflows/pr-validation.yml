@@ -29,24 +29,19 @@ jobs:
 
             const label = "invalid";
             const prNumber = context.payload.pull_request.number;
-            const { data: labels } = await github.rest.issues.listLabelsForIssue({
-              ...context.repo, issue_number: prNumber,
-            });
-            const hasInvalid = labels.some((l) => l.name === label);
+            const hide = (p) => p.catch(() => {});
 
             if (missing.length) {
-              if (!hasInvalid) {
-                await github.rest.issues.addLabels({
-                  ...context.repo, issue_number: prNumber, labels: [label],
-                });
-              }
-              await github.rest.issues.createComment({
+              await hide(github.rest.issues.addLabels({
+                ...context.repo, issue_number: prNumber, labels: [label],
+              }));
+              await hide(github.rest.issues.createComment({
                 ...context.repo,
                 issue_number: prNumber,
                 body: `⚠️ PR does not match the template. Missing sections: ${missing.join(", ")}. Please fill them in.`,
-              });
-            } else if (hasInvalid) {
-              await github.rest.issues.removeLabel({
+              }));
+            } else {
+              await hide(github.rest.issues.removeLabel({
                 ...context.repo, issue_number: prNumber, name: label,
-              });
+              }));
             }
