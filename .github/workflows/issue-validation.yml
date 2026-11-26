@@ -32,25 +32,10 @@ jobs:
               if (score > bestScore) { bestScore = score; best = t; missingOfBest = missing; }
             }
 
-            const label = "invalid";
-            const { data: labels } = await github.rest.issues.listLabelsForIssue({
-              ...context.repo, issue_number: context.issue.number,
-            });
-            const hasInvalid = labels.some((l) => l.name === label);
-
             if (missingOfBest.length) {
-              if (!hasInvalid) {
-                await github.rest.issues.addLabels({
-                  ...context.repo, issue_number: context.issue.number, labels: [label],
-                });
-              }
               await github.rest.issues.createComment({
                 ...context.repo,
                 issue_number: context.issue.number,
-                body: `⚠️ Issue does not match the \`${best}\` template. Missing sections: ${missingOfBest.join(", ")}. Please complete them so it can be processed.`,
-              });
-            } else if (hasInvalid) {
-              await github.rest.issues.removeLabel({
-                ...context.repo, issue_number: context.issue.number, name: label,
+                body: `⚠️ Issue does not match the \`${best}\` template. Missing sections: ${missingOfBest.join(", ")}. Please complete them.`,
               });
             }
