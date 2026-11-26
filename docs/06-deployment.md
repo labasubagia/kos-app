@@ -1,34 +1,34 @@
 # Deployment & Environment
 
-## Status awal
-- Semua pengembangan, data, dan pengujian berjalan di **staging** (tech stack gratis; akun `owner1`/`admin1` sebagai akun uji).
-- **Produksi** disiapkan wiring-nya tapi aktif belakangan, setelah staging stabil.
-- Tujuan env: mempermudah testing — staging bebas eksperimen, prod dijaga bersih.
+## Initial status
+- All development, data, and testing run in **staging** (free stack; accounts `owner1`/`admin1` are test accounts).
+- **Production** has its wiring prepared but activates later, once staging is stable.
+- Purpose of env: make testing easier — staging is free for experiments, prod stays clean.
 
-## Strategi environment
+## Environment strategy
 | Env | Supabase | Frontend |
 |---|---|---|
-| Staging (aktif) | Proyek `kos-app-staging` | **Netlify** (gratis, URL preview per PR/branch) |
-| Produksi (menyusul) | Proyek `kos-app` | GitHub Pages |
+| Staging (active) | Project `kos-app-staging` | **Netlify** (free, URL preview per PR/branch) |
+| Production (later) | Project `kos-app` | GitHub Pages |
 
-- GitHub Pages = **1 situs per repo** → prod pakai Pages; staging pakai **Netlify** agar cukup 1 repo source.
-- Secrets per env (Supabase URL + anon key) disimpan di GitHub Secrets sesuai environment.
+- GitHub Pages = **1 site per repo** → prod uses Pages; staging uses **Netlify** to keep a single source repo.
+- Secrets per env (Supabase URL + anon key) stored in GitHub Secrets per environment.
 
 ## GitHub Development Flow (trunk-based)
-- **`main`** = integrasi; kini deploy sebagai staging di Netlify.
-- Feature branch pendek (`feat/...`, `fix/...`) off main; **PR wajib**.
-- Tiap PR → **Netlify deploy preview** (URL unik) + CI (`svelte-check`, lint).
-- Review/uji di preview terhadap data staging Supabase.
-- Merge ke `main` → refresh situs staging.
-- **Rilis prod**: tag `v*` → GitHub Actions build → GitHub Pages (saat prod aktif).
-- Lindungi `main`: required status check + review.
+- **`main`** = integration; currently deployed as staging on Netlify.
+- Short feature branches (`feat/...`, `fix/...`) off `main`; **PR required**.
+- Each PR → **Netlify deploy preview** (unique URL) + CI (`svelte-check`, lint).
+- Review/test on the preview against staging Supabase data.
+- Merge to `main` → refresh the staging site.
+- **Prod release**: tag `v*` → GitHub Actions build → GitHub Pages (once prod is active).
+- Protect `main`: required status check + review.
 
-## Migrasi Supabase
-- Migrasi SQL dikelola per PR (`supabase db diff`); review sebelum merge. Pastikan kompatibel maju-mundur.
-- Apply via Supabase CLI: `supabase link --project-ref <id>` lalu `supabase db push` per env.
-- Bukan migrasi manual di dashboard.
+## Supabase migrations
+- SQL migrations handled per PR (`supabase db diff`); review before merge. Ensure forward/backward compatibility.
+- Apply via Supabase CLI: `supabase link --project-ref <id>` then `supabase db push` per env.
+- Never manual migrations in the dashboard.
 
 ## Multi-tenant (SaaS)
-- Setiap env (staging/prod) punya dataset tenant-nya sendiri — data staging tidak pernah tercampur dengan prod.
-- Di dalam satu env: tiap owner bekerja di tenant-nya sendiri, terisolasi RLS.
-- Akun uji (`owner1`/`admin1`) hidup di tenant staging; prod nanti punya akun `owner1`/`admin1` yang dibuat ulang.
+- Each env (staging/prod) has its own tenant dataset — staging data never mixes with prod.
+- Within one env: each owner works in their own tenant, isolated by RLS.
+- Test accounts (`owner1`/`admin1`) live in the staging tenant; prod will later have its own `owner1`/`admin1` accounts, recreated.

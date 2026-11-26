@@ -1,32 +1,29 @@
 # Roadmap
 
-## Fase 1 — Fondasi
-- Scaffold SvelteKit + `adapter-static`, deploy kosong ke GitHub Pages via GitHub Actions.
-- Skema Postgres (SQL) di Supabase + aktifkan Auth (admin tunggal).
-- Skema Postgres (SQL) di Supabase: `tenants`, `memberships`, tabel bisnis + RLS.
-- Aktifkan Auth; bootstrap signup → buat tenant + owner.
+## Phase 1 — Foundation
+- Scaffold SvelteKit + `adapter-static`, deploy empty to GitHub Pages via GitHub Actions.
+- Postgres schema (SQL) in Supabase: `tenants`, `memberships`, business tables + RLS.
+- Enable Auth; bootstrap signup → create tenant + owner.
 
-## Fase 2 — Model & CRUD inti
-- Tabel: `kamar`, `penyewa`, `kontrak` (partial unique index aktif, `tenant_id`) di Supabase.
-- Halaman SvelteKit: daftar/form kamar, penyewa, kontrak (check-in/out).
-- Logika status kamar + invariant 1-kontrak-aktif per tenant.
-- Kelola anggota (owner): tambah/hapus admin.
-- Halaman SvelteKit: daftar/form kamar, penyewa, kontrak (check-in/out).
-- Logika status kamar + invariant 1-kontrak-aktif.
+## Phase 2 — Core models & CRUD
+- Tables: `rooms`, `renters`, `contracts` (partial unique index active, `tenant_id`) in Supabase.
+- SvelteKit pages: room/renter list forms, contracts (check-in/out).
+- Room status logic + 1-active-contract invariant per tenant.
+- Member management (owner): add/remove admins.
 
-## Fase 3 — Engine tagihan & pembayaran
-- Tabel: `tagihan`, `pembayaran`.
-- Generate tagihan (Edge Function terjadwal / on-demand) + halaman tagihan per kontrak.
-- Catat pembayaran (penuh/sebagian), status otomatis, FIFO.
-- Denda & tunggakan.
+## Phase 3 — Billing & payment engine
+- Tables: `bills`, `payments`.
+- Generate bills (scheduled Edge Function / on-demand) + per-contract bill page.
+- Record payments (full/partial), auto status, FIFO.
+- Late fees & arrears.
 
-## Fase 4 — Dashboard & laporan
-- Widget dashboard: okupansi, pemasukan bulanan, tunggakan, kontrak hampir berakhir.
-- Ekspor CSV + tampilan cetak kwitansi.
+## Phase 4 — Dashboard & reports
+- Dashboard widgets: occupancy, monthly income, arrears, expiring contracts.
+- CSV export + printable receipt view.
 
-## Fase 5 — Hardening & rilis
-- Validasi input di sisi klien + RLS di sisi DB.
-- Uji end-to-end alur check-in → tagihan → bayar → check-out.
+## Phase 5 — Hardening & release
+- Client-side input validation + RLS on the DB side.
+- End-to-end test of check-in → bill → pay → check-out.
 
-## Setelah rilis
-- P2 (opsional): notifikasi pengingat, kemudian multi-properti.
+## After release
+- P2 (optional): reminders, then multi-property.

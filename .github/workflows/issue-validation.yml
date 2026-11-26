@@ -24,7 +24,7 @@ jobs:
 
             const has = (h) => body.includes(`### ${h}`);
 
-            // Tebak template dengan skor kecocokan tertinggi
+            // Guess template by highest heading-match score
             let best = null, bestScore = -1, missingOfBest = [];
             for (const [t, heads] of Object.entries(expectations)) {
               const missing = heads.filter((h) => !has(h));
@@ -47,7 +47,7 @@ jobs:
               await github.rest.issues.createComment({
                 ...context.repo,
                 issue_number: context.issue.number,
-                body: `⚠️ Issue tidak sesuai template \`${best}\`. Bagian hilang: ${missingOfBest.join(", ")}. Mohon lengkapi agar dapat diproses.`,
+                body: `⚠️ Issue does not match the \`${best}\` template. Missing sections: ${missingOfBest.join(", ")}. Please complete them so it can be processed.`,
               });
             } else if (hasInvalid) {
               await github.rest.issues.removeLabel({
