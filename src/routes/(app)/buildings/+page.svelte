@@ -211,7 +211,13 @@
 				<Label for="bld-loc">Location</Label>
 				<Select type="single" bind:value={form.location_id}>
 					<SelectTrigger id="bld-loc" class="w-full">
-						<SelectValue placeholder="Select location" />
+						<SelectValue placeholder="Select location">
+							{#snippet children({ selection })}
+								{selection.type === "single"
+									? (locations.find((l) => l.id === selection.selected?.value)?.name ?? "")
+									: selection.selected.map((s) => locations.find((l) => l.id === s.value)?.name ?? "").join(", ")}
+							{/snippet}
+						</SelectValue>
 					</SelectTrigger>
 					<SelectContent>
 						{#each locations as loc}
