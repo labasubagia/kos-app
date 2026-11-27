@@ -48,11 +48,9 @@ describe("isWithinStayWindow", () => {
 	it("open-ended contract (null end) has no upper bound", () => {
 		expect(isWithinStayWindow("2030-06", start, null)).toBe(true);
 	});
-	it("3 Nov check-ins billable in Nov, Dec check-in not", () => {
-		const novStart = "2026-11-01";
-		const decStart = "2026-12-01";
-		for (let i = 0; i < 3; i++) expect(isWithinStayWindow("2026-11", novStart, null)).toBe(true);
-		expect(isWithinStayWindow("2026-11", decStart, null)).toBe(false);
+	it("Nov check-in billable in Nov; Dec check-in not", () => {
+		expect(isWithinStayWindow("2026-11", "2026-11-01", null)).toBe(true);
+		expect(isWithinStayWindow("2026-11", "2026-12-01", null)).toBe(false);
 	});
 });
 

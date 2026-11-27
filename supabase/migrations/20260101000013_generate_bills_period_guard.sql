@@ -16,7 +16,7 @@ declare
   v_prior_period text;
   v_due_date date;
 begin
-  if p_period !~ '^\d{4}-\d{2}$' then raise exception 'invalid period'; end if;
+  if p_period !~ '^\d{4}-(0[1-9]|1[0-2])$' then raise exception 'invalid period'; end if;
 
   v_prior_period := to_char(
     (to_date(p_period || '-01', 'YYYY-MM-DD') - interval '1 month'),

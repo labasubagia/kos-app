@@ -39,11 +39,12 @@
 	let deleting = $state(false);
 	const now = new Date();
 	let calDate = $state(new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1));
+	let gridYear = $state(now.getFullYear());
 	let open = $state(false);
 	const selectedMonth = $derived(`${calDate.year}-${String(calDate.month).padStart(2, "0")}`);
 	const months = Array.from({ length: 12 }, (_, i) => i + 1);
 	function chooseMonth(m: number) {
-		calDate = new CalendarDate(calDate.year, m, 1);
+		calDate = new CalendarDate(gridYear, m, 1);
 		open = false;
 		load();
 	}
@@ -71,10 +72,11 @@
 	const sortedBills = $derived(sortBills(bills));
 
 	async function generate(period: string) {
-		const { data: cs } = await supabase.from("contracts").select("start_date, end_date").eq("active", true);
-		const covered = (cs ?? []).some((c) => isWithinStayWindow(period, c.start_date, c.end_date));
+		const { data: cs } = await supabase.from("contracts").select("id, start_date, end_date").eq("active", true);
+		const candidates = (genContract ? ((cs ?? []) as { id: string; start_date: string; end_date: string | null }[]).filter((c) => c.id === genContract) : (cs ?? [])) as { start_date: string; end_date: string | null }[];
+		const covered = candidates.some((c) => isWithinStayWindow(period, c.start_date, c.end_date));
 		if (!covered) {
-			toast.error(`No active contract covers ${period}`);
+			toast.error(genContract ? `Selected contract does not cover ${period}` : `No active contract covers ${period}`);
 			return;
 		}
 		generating = true;
@@ -120,9 +122,9 @@
 				</Popover.Trigger>
 				<Popover.Content align="start" class="w-auto p-3">
 					<div class="flex items-center justify-between">
-						<Button size="sm" variant="ghost" onclick={() => (calDate = new CalendarDate(calDate.year - 1, calDate.month, 1))} aria-label="Previous year">‹</Button>
-						<span class="text-sm font-medium">{calDate.year}</span>
-						<Button size="sm" variant="ghost" onclick={() => (calDate = new CalendarDate(calDate.year + 1, calDate.month, 1))} aria-label="Next year">›</Button>
+						<Button size="sm" variant="ghost" onclick={() => (gridYear -= 1)} aria-label="Previous year">‹</Button>
+						<span class="text-sm font-medium">{gridYear}</span>
+						<Button size="sm" variant="ghost" onclick={() => (gridYear += 1)} aria-label="Next year">›</Button>
 					</div>
 					<div class="mt-2 grid grid-cols-3 gap-1">
 						{#each months as m}
