@@ -4,7 +4,7 @@
 	import * as Card from "$lib/components/ui/card";
 	import { Badge } from "$lib/components/ui/badge";
 	import { Skeleton } from "$lib/components/ui/skeleton";
-	import { BedDouble, Wallet, AlertTriangle, CalendarClock } from "@lucide/svelte";
+	import { BedDouble, Wallet, AlertTriangle, CalendarClock, CircleDollarSign } from "@lucide/svelte";
 
 	type Room = {
 		id: string;
@@ -32,6 +32,7 @@
 	let loading = $state(true);
 	let rooms = $state<Room[]>([]);
 	let monthIncome = $state(0);
+	let monthExpense = $state(0);
 	let bills = $state<Bill[]>([]);
 	let contracts = $state<Contract[]>([]);
 
@@ -46,7 +47,7 @@
 	).padStart(2, "0")}`;
 
 	onMount(async () => {
-		const [r, p, b, c] = await Promise.all([
+	const [r, p, b, c, e] = await Promise.all([
 			supabase.from("rooms").select("id, name, status, buildings(name, locations(name))"),
 			supabase
 				.from("payments")
@@ -57,13 +58,19 @@
 				.from("bills")
 				.select("id, period, amount, status, payments(amount), contracts!inner(rooms(name), renters(name))")
 				.neq("status", "paid"),
-			supabase
-				.from("contracts")
-				.select("id, end_date, rooms(name), renters(name)")
-				.eq("active", true),
-		]);
+		supabase
+			.from("contracts")
+			.select("id, end_date, rooms(name), renters(name)")
+			.eq("active", true),
+		supabase
+			.from("expenses")
+			.select("amount")
+			.gte("date", monthStart)
+			.lte("date", monthEnd),
+	]);
 		rooms = (r.data ?? []) as unknown as Room[];
 		monthIncome = (p.data ?? []).reduce((sum: number, row: { amount: number }) => sum + Number(row.amount), 0);
+		monthExpense = (e.data ?? []).reduce((sum: number, row: { amount: number }) => sum + Number(row.amount), 0);
 		bills = (b.data ?? []) as unknown as Bill[];
 		contracts = (c.data ?? []) as unknown as Contract[];
 		loading = false;
@@ -218,20 +225,30 @@
 			</Card.Content>
 		</Card.Root>
 
-		<!-- Monthly income -->
+		<!-- Cash flow -->
 		<Card.Root>
 			<Card.Header>
-				<Card.Title class="flex items-center gap-2"><Wallet class="h-4 w-4" /> Monthly income</Card.Title>
+				<Card.Title class="flex items-center gap-2"><Wallet class="h-4 w-4" /> Monthly cash flow</Card.Title>
 			</Card.Header>
 			<Card.Content>
 				{#if loading}
 					<Skeleton class="h-8 w-2/3" /><Skeleton class="mt-2 h-4 w-1/2" />
 				{:else}
-					<div class="text-3xl font-bold">{idr(monthIncome)}</div>
-					<p class="mt-1 text-sm text-muted-foreground capitalize">{monthLabel}</p>
-					{#if monthIncome === 0}
-						<p class="mt-4 text-sm text-muted-foreground">No payments recorded this month.</p>
-					{/if}
+					<div class="space-y-3">
+						<div class="flex items-center justify-between">
+							<span class="text-sm text-muted-foreground flex items-center gap-2"><CircleDollarSign class="h-4 w-4" /> Income</span>
+							<span class="font-semibold">{idr(monthIncome)}</span>
+						</div>
+						<div class="flex items-center justify-between">
+							<span class="text-sm text-muted-foreground flex items-center gap-2"><Wallet class="h-4 w-4" /> Expenses</span>
+							<span class="font-semibold">{idr(monthExpense)}</span>
+						</div>
+						<div class="flex items-center justify-between border-t pt-3">
+							<span class="text-sm font-medium">Net</span>
+							<span class="text-xl font-bold {monthIncome - monthExpense < 0 ? "text-destructive" : ""}">{idr(monthIncome - monthExpense)}</span>
+						</div>
+						<p class="pt-1 text-sm text-muted-foreground capitalize">{monthLabel}</p>
+					</div>
 				{/if}
 			</Card.Content>
 		</Card.Root>
