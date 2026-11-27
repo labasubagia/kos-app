@@ -59,9 +59,13 @@
 		const outstanding = (co.bills ?? []).reduce((sum, b) => {
 			return b.status === "paid" ? sum : sum + Number(b.amount);
 		}, 0);
+		const unpaidPeriods = (co.bills ?? [])
+			.filter((b) => b.status !== "paid")
+			.map((b) => b.period)
+			.sort();
 		return {
 			id: co.id,
-			label: `${co.renters.name} — ${co.rooms.name}`,
+			label: `${co.renters.name} — ${co.rooms.name} (${unpaidPeriods.join(", ")})`,
 			outstanding,
 		};
 	}).filter((o) => o.outstanding > 0).toSorted((a, b) => a.label.localeCompare(b.label));
