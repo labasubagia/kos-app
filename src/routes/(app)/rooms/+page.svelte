@@ -7,7 +7,6 @@
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
-	import { Card, CardContent, CardHeader, CardTitle } from "$lib/components/ui/card/index.js";
 	import {
 		Table,
 		TableBody,

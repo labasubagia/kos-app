@@ -6,7 +6,6 @@
 	import { tenant } from "$lib/stores/auth.svelte.ts";
 	import { Separator } from "$lib/components/ui/separator";
 	import DatePicker from "$lib/components/date-picker.svelte";
-	import * as Card from "$lib/components/ui/card";
 	import * as Table from "$lib/components/ui/table";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Input from "$lib/components/ui/input";
