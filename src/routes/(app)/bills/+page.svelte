@@ -6,6 +6,8 @@
 	import { CalendarDate } from "@internationalized/date";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
+	import * as Dialog from "$lib/components/ui/dialog";
+	import { Trash2 } from "@lucide/svelte";
 	import { toast } from "svelte-sonner";
 	import { balanceOf, formatIDR, sortBills, totalPaid } from "$lib/logic/bills";
 
@@ -30,6 +32,8 @@
 	let bills = $state<Bill[]>([]);
 	let loading = $state(true);
 	let generating = $state(false);
+	let constBill = $state<Bill | null>(null);
+	let deleting = $state(false);
 	const now = new Date();
 	let calDate = $state(new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1));
 	let open = $state(false);
@@ -64,7 +68,25 @@
 			toast.error(error.message);
 			return;
 		}
-		toast.success(`Generated ${data} bill${data === 1 ? "" : "s"}`);
+		if (data === 0) {
+			toast.message("No bills created — month outside contract stay or already billed.");
+		} else {
+			toast.success(`Generated ${data} bill${data === 1 ? "" : "s"}`);
+		}
+		await load();
+	}
+
+	async function removeBill() {
+		if (!constBill) return;
+		deleting = true;
+		const { error } = await supabase.from("bills").delete().eq("id", constBill.id);
+		deleting = false;
+		if (error) {
+			toast.error(error.message);
+			return;
+		}
+		toast.success(`Deleted bill for ${constBill.period}`);
+		constBill = null;
 		await load();
 	}
 </script>
@@ -109,6 +131,7 @@
 					<Table.Head class="text-right">Paid</Table.Head>
 					<Table.Head class="text-right">Balance</Table.Head>
 					<Table.Head>Status</Table.Head>
+					<Table.Head class="text-right">Actions</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -121,16 +144,33 @@
 						<Table.Cell class="text-right">{formatIDR(b.amount)}</Table.Cell>
 						<Table.Cell class="text-right">{formatIDR(totalPaid(b.payments))}</Table.Cell>
 						<Table.Cell class="text-right">{formatIDR(balanceOf(b.amount, b.payments))}</Table.Cell>
-						<Table.Cell>
-							<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
-						</Table.Cell>
+							<Table.Cell>
+								<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
+							</Table.Cell>
+							<Table.Cell class="text-right">
+								<Button size="sm" variant="ghost" aria-label={`Delete bill ${b.period}`} onclick={() => (constBill = b)}>
+									<Trash2 class="h-4 w-4" />
+								</Button>
+							</Table.Cell>
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
+						<Table.Cell colspan={9} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>
+	<Dialog.Root open={constBill !== null} onOpenChange={(o) => { if (!o) constBill = null; }}>
+		<Dialog.Content class="sm:max-w-sm">
+			<Dialog.Header>
+				<Dialog.Title>Delete bill?</Dialog.Title>
+				<Dialog.Description>Delete bill for {constBill?.period}? Its payments will also be removed.</Dialog.Description>
+			</Dialog.Header>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (constBill = null)}>Cancel</Button>
+				<Button onclick={removeBill} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
 	</div>
 </div>
