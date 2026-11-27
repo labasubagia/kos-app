@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
-import { generateBills, generateBillsApi, recordPayment, seedFixtures } from "./helpers";
+import { generateBills, generateBillsApi, pickPeriod, recordPayment, seedFixtures } from "./helpers";
 
 ensureCreds();
 
@@ -66,4 +66,51 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 
 	await cleanupArtifacts(c, renterA, roomA);
 	await cleanupArtifacts(c, renterB, roomB);
+});
+
+test("backdated and upfront bill generation for selected period", async ({ page }) => {
+	test.setTimeout(120_000);
+	const now = new Date();
+	const past = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+	const future = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+	const room = uniqueName("Rm");
+	const renter = uniqueName("Rnt");
+	const rent = "800000";
+	const c = await client();
+	await login(page);
+	await seedFixtures(c, {
+		location: uniqueName("Loc"),
+		building: uniqueName("Bld"),
+		room,
+		renter,
+		rent,
+		startDate: past.toISOString().slice(0, 10),
+	});
+
+	const pastPeriod = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, "0")}`;
+	const futurePeriod = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, "0")}`;
+
+	// backdated: generate a past month within the stay window
+	await page.goto("/bills");
+	await pickPeriod(page, past.getFullYear(), past.getMonth() + 1);
+	await page.getByRole("button", { name: new RegExp(`^Generate ${pastPeriod}`) }).click();
+	await expect(page.getByText(/Generated \d+ bill/)).toBeVisible();
+	const row = page.locator("tbody tr", { hasText: renter });
+	await expect(row).toBeVisible();
+	await expect(row.getByText("unpaid")).toBeVisible();
+
+	// idempotent res: no new bills
+	await page.getByRole("button", { name: new RegExp(`^Generate ${pastPeriod}`) }).click();
+	await expect(page.getByText("No bill created")).toBeVisible();
+	await expect(page.locator("tbody tr", { hasText: renter })).toHaveCount(1);
+
+	// upfront: generate a future month
+	await pickPeriod(page, future.getFullYear(), future.getMonth() + 1);
+	await page.getByRole("button", { name: new RegExp(`^Generate ${futurePeriod}`) }).click();
+	await expect(page.getByText(/Generated \d+ bill/)).toBeVisible();
+	await expect(page.locator("tbody tr", { hasText: renter })).toHaveCount(1);
+	await expect(row.getByText("unpaid")).toBeVisible();
+
+	await cleanupArtifacts(c, renter, room);
 });
