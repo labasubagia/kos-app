@@ -88,18 +88,27 @@ export async function checkInContract(
 
 export async function generateBills(page: Page) {
   await page.goto("/bills");
-  // RPC is idempotent (unique contract_id+period); retry guards against a
-  // pre-hydration click that fires no request (toast never appears).
+  // Wait for the generate_bills RPC round-trip, not the ephemeral sonner
+  // toast (its text varies by bill count and is unreliable under retry).
+  // Retry guards against a pre-hydration click that fires no request.
   for (let attempt = 0; attempt < 3; attempt++) {
+    const resp = page.waitForResponse(
+      (r) =>
+        r.url().includes("/rpc/generate_bills") &&
+        r.request().method() === "POST" &&
+        r.status() >= 200 &&
+        r.status() < 300,
+      { timeout: 15_000 },
+    );
     await page.getByRole("button", { name: /Generate \d{4}-\d{2}/ }).click();
     try {
-      await expect(page.getByText(/Generated \d+ bill/)).toBeVisible({ timeout: 10_000 });
+      await resp;
       return;
     } catch {
-      // no toast yet; retry
+      // no request fired (pre-hydration click); retry
     }
   }
-  await expect(page.getByText(/Generated \d+ bill/)).toBeVisible({ timeout: 15_000 });
+  throw new Error("generateBills: RPC never issued after 3 clicks");
 }
 
 export async function recordPayment(page: Page, contractLabel: string, amount: string) {
