@@ -33,8 +33,9 @@ test("dashboard lists arrears with outstanding balance and empty rooms", async (
 
 	// arrears card shows the unpaid renter with outstanding = full bill amount
 	const arrears = page.locator("[data-slot=card]", { hasText: "Arrears" });
-	await expect(arrears.getByText(renter)).toBeVisible();
-	await expect(arrears.getByText(Number(rent).toLocaleString("id-ID"))).toBeVisible();
+	const arrearsRow = arrears.locator("li", { hasText: renter });
+	await expect(arrearsRow).toBeVisible();
+	await expect(arrearsRow.getByText(Number(rent).toLocaleString("id-ID"))).toBeVisible();
 
 	// empty rooms list shows the free room (occupied room is not listed)
 	await expect(page.getByText(`${building} · ${roomFree}`)).toBeVisible();
