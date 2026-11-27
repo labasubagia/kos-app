@@ -152,9 +152,4 @@ export async function seedFixtures(
 	return { renterId: rnt.id, roomId: rm.id, contractId: contract.id };
 }
 
-/** Generate the current month's bills via RPC. */
-export async function generateBillsApi(c: SupabaseClient): Promise<void> {
-	const period = new Date().toISOString().slice(0, 7);
-	const { error } = await c.rpc("generate_bills", { p_period: period, p_contract_id: null });
-	if (error) throw new Error(`generate_bills: ${error.message}`);
-}
+export { generateBillsApi } from "../tests/support/db";

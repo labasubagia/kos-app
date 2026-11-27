@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, ensureCreds, login, uniqueName } from "./harness";
+import { dbClient } from "../tests/support/db";
 import { generateBills, generateBillsApi, pickPeriod, recordPayment, seedFixtures } from "./helpers";
 
 ensureCreds();
@@ -11,7 +12,7 @@ test("bills table exposes amount/paid/balance; new bill is unpaid with zero paid
 	const rent = "800000";
 
 	await login(page);
-	await seedFixtures(await client(), {
+	await seedFixtures(await dbClient(), {
 		location: uniqueName("Loc"),
 		building: uniqueName("Bld"),
 		room,
@@ -29,7 +30,7 @@ test("bills table exposes amount/paid/balance; new bill is unpaid with zero paid
 	await expect(billRow.getByText(zero)).toBeVisible();
 	await expect(billRow.getByText(Number(rent).toLocaleString("id-ID"))).toHaveCount(2); // Amount + Balance
 
-	await cleanupArtifacts(await client(), renter, room);
+	await cleanupArtifacts(await dbClient(), renter, room);
 });
 
 test("unpaid bills sort above paid; list defaults to current month", async ({ page }) => {
@@ -40,7 +41,7 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 	const renterB = uniqueName("RntB");
 	const rent = "800000";
 
-	const c = await client();
+	const c = await dbClient();
 	await login(page);
 	await seedFixtures(c, { location: uniqueName("Loc"), building: uniqueName("Bld"), room: roomA, renter: renterA, rent });
 	await seedFixtures(c, { location: uniqueName("Loc2"), building: uniqueName("Bld2"), room: roomB, renter: renterB, rent });
@@ -77,7 +78,7 @@ test("backdated and upfront bill generation for selected period", async ({ page 
 	const room = uniqueName("Rm");
 	const renter = uniqueName("Rnt");
 	const rent = "800000";
-	const c = await client();
+	const c = await dbClient();
 	await login(page);
 	await seedFixtures(c, {
 		location: uniqueName("Loc"),

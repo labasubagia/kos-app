@@ -1,31 +1,6 @@
-import { readFileSync } from "node:fs";
 import { test, type Locator, type Page } from "@playwright/test";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-function envFromDotEnv(): Record<string, string> {
-  try {
-    const out: Record<string, string> = {};
-    for (const line of readFileSync(".env", "utf8").split("\n")) {
-      const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-      if (m) out[m[1]] = m[2];
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-const dot = envFromDotEnv();
-
-const EMAIL = process.env.E2E_EMAIL ?? "";
-const PASS = process.env.E2E_PASS ?? "";
-const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL ?? dot.PUBLIC_SUPABASE_URL ?? "";
-const SUPABASE_ANON_KEY =
-  process.env.PUBLIC_SUPABASE_ANON_KEY ?? dot.PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-export function hasCreds(): boolean {
-  return !!(EMAIL && PASS && SUPABASE_ANON_KEY);
-}
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { E2E_EMAIL, E2E_PASS, hasCreds } from "../tests/support/db";
 
 /**
  * Skip locally when credentials are absent, but fail loudly in CI so a PR
@@ -73,8 +48,8 @@ export async function login(page: Page): Promise<void> {
     } catch {
       /* ignore */
     }
-    await typeInto(page.locator('input[type="email"]'), EMAIL);
-    await typeInto(page.locator('input[type="password"]'), PASS);
+    await typeInto(page.locator('input[type="email"]'), E2E_EMAIL);
+    await typeInto(page.locator('input[type="password"]'), E2E_PASS);
     await page.getByRole("button", { name: "Sign in" }).click();
     try {
       await page.waitForURL(/dashboard|create-tenant/, { timeout: 20000 });
@@ -98,13 +73,6 @@ export async function selectOption(page: Page, labelText: string, optionText: st
 
 export function uniqueName(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
-}
-
-export async function client(): Promise<SupabaseClient> {
-  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const { error } = await c.auth.signInWithPassword({ email: EMAIL, password: PASS });
-  if (error) throw error;
-  return c;
 }
 
 /**

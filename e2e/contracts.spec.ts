@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, ensureCreds, fillByLabel, login, selectOption, uniqueName } from "./harness";
+import { cleanupArtifacts, ensureCreds, fillByLabel, login, selectOption, uniqueName } from "./harness";
+import { dbClient } from "../tests/support/db";
 import { createBuilding, createLocation, createRenter, createRoom, pickDate } from "./helpers";
 
 ensureCreds();
@@ -21,7 +22,7 @@ test("selects render labels, not uuids, in the check-in dialog", async ({ page }
 	test.setTimeout(120_000);
 	const { room, renter } = await setup(page);
 
-	const { data: rows } = await (await client())
+	const { data: rows } = await (await dbClient())
 		.from("rooms")
 		.select("name, buildings(locations(name), name)")
 		.eq("name", room)
@@ -45,7 +46,7 @@ test("selects render labels, not uuids, in the check-in dialog", async ({ page }
 	await expect(roomTrigger).toContainText(roomLabel);
 	await expect(roomTrigger).not.toHaveText(uuid);
 
-	await cleanupArtifacts(await client(), renter, room);
+	await cleanupArtifacts(await dbClient(), renter, room);
 });
 
 test("check-in uses a calendar date picker fed end-to-end", async ({ page }) => {
@@ -73,5 +74,5 @@ test("check-in uses a calendar date picker fed end-to-end", async ({ page }) => 
 	const iso = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
 	await expect(row).toContainText(iso);
 
-	await cleanupArtifacts(await client(), renter, room);
+	await cleanupArtifacts(await dbClient(), renter, room);
 });

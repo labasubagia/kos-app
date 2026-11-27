@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, ensureCreds, login, uniqueName } from "./harness";
+import { dbClient } from "../tests/support/db";
 import {
 	checkInContract,
 	createBuilding,
@@ -40,5 +41,5 @@ test("dashboard lists arrears with outstanding balance and empty rooms", async (
 	// empty rooms list shows the free room (occupied room is not listed)
 	await expect(page.getByText(`${building} · ${roomFree}`)).toBeVisible();
 
-	await cleanupArtifacts(await client(), renter, roomOcc);
+	await cleanupArtifacts(await dbClient(), renter, roomOcc);
 });

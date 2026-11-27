@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, ensureCreds, login, uniqueName } from "./harness";
+import { dbClient } from "../tests/support/db";
 import {
 	expectBillStatus,
 	generateBillsApi,
@@ -13,7 +14,7 @@ test("partial pay → overpayment rejected (stays partial) → completes with ex
 	test.setTimeout(120_000);
 	const room = uniqueName("Rm");
 	const renter = uniqueName("Rnt");
-	const c = await client();
+	const c = await dbClient();
 	const rent = "850000";
 
 	await login(page);
@@ -42,5 +43,5 @@ test("partial pay → overpayment rejected (stays partial) → completes with ex
 	await expect(page.getByText("Payment recorded")).toBeVisible();
 	await expectBillStatus(page, renter, "paid");
 
-	await cleanupArtifacts(await client(), renter, room);
+	await cleanupArtifacts(await dbClient(), renter, room);
 });

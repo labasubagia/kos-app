@@ -3,19 +3,9 @@
 // RPCs that drive check-in → bill → pay → check-out and the invariant
 // transitions. Skips locally when credentials are absent; fails in CI.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-const EMAIL = process.env.E2E_EMAIL ?? "";
-const PASS = process.env.E2E_PASS ?? "";
-const URL = process.env.PUBLIC_SUPABASE_URL ?? "";
-const KEY = process.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-const hasCreds = !!(EMAIL && PASS && URL && KEY);
-if (!hasCreds && process.env.CI) {
-	throw new Error(
-		"Supabase credentials not set (E2E_EMAIL/E2E_PASS/PUBLIC_SUPABASE_URL/PUBLIC_SUPABASE_ANON_KEY)",
-	);
-}
+import { type SupabaseClient } from "@supabase/supabase-js";
+import { dbClient, generateBillsApi, hasCreds, requireCreds } from "./support/db";
+requireCreds();
 
 const today = () => new Date().toISOString().slice(0, 10);
 const corr = `${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
@@ -38,9 +28,7 @@ describe.skipIf(!hasCreds)("billing flow against live Supabase", () => {
 	const created: { kind: Kind; id: string }[] = [];
 
 	beforeAll(async () => {
-		c = createClient(URL, KEY);
-		const { error } = await c.auth.signInWithPassword({ email: EMAIL, password: PASS });
-		if (error) throw new Error(`sign in: ${error.message}`);
+		c = await dbClient();
 		const { data: member } = await c.from("memberships").select("tenant_id").limit(1).single();
 		if (!member) throw new Error("no membership for test account");
 		tid = member.tenant_id as string;
@@ -87,8 +75,7 @@ describe.skipIf(!hasCreds)("billing flow against live Supabase", () => {
 		expect(re).toBeNull();
 		expect(fieldString(room, "status")).toBe("occupied");
 
-		const gen = await c.rpc("generate_bills");
-		expect(gen.error).toBeNull();
+		await generateBillsApi(c);
 
 		const { data: bills } = await c.from("bills").select("id, amount, status").eq("contract_id", contractId);
 		expect(bills?.length).toBeGreaterThan(0);
