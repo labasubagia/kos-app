@@ -38,20 +38,8 @@ jobs:
         id: sb
         run: |
           set -euo pipefail
-          npx supabase status -o env | awk -F= '
-            /^SUPABASE_URL=/{ print "url=" $2 }
-            /^SUPABASE_ANON_KEY=/{ print "anon=" $2 }
-            /^SUPABASE_SERVICE_ROLE_KEY=/{ print "service=" $2 }
-          ' > /tmp/sb.env
-          test -s /tmp/sb.env || { echo "supabase status produced no env"; cat /tmp/sb.env; exit 1; }
+          node scripts/ci-supabase-env.mjs > /tmp/sb.env
           cat /tmp/sb.env >> "$GITHUB_OUTPUT"
-
-      - name: Provision CI user + owner tenant
-        run: node scripts/ci-supabase-setup.mjs
-        env:
-          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
-          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.sb.outputs.service }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
