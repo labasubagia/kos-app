@@ -202,7 +202,7 @@
 								{/if}
 							</TableCell>
 							<TableCell>{e.date}</TableCell>
-							<TableCell class="text-muted-foreground">
+							<TableCell class="max-w-xs truncate text-muted-foreground">
 								{e.buildings ? `${e.buildings.name} (${e.buildings.locations.name})` : e.locations?.name ?? "-"}
 							</TableCell>
 							<TableCell class="text-right font-medium">{idr(e.amount)}</TableCell>
@@ -248,7 +248,7 @@
 				</Select>
 			</div>
 
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid gap-2">
 				<div class="grid gap-2">
 					<Label>Location (optional)</Label>
 					<Select type="single" bind:value={form.location_id}>
@@ -256,7 +256,7 @@
 						<SelectContent>
 							<SelectItem value="none">None</SelectItem>
 							{#each locations as l}
-								<SelectItem value={l.id}>{l.name}</SelectItem>
+							<SelectItem value={l.id} label={l.name}>{l.name}</SelectItem>
 							{/each}
 						</SelectContent>
 					</Select>
@@ -268,7 +268,7 @@
 						<SelectContent>
 							<SelectItem value="none">None</SelectItem>
 							{#each buildings as b}
-								<SelectItem value={b.id}>{b.name} ({b.locations.name})</SelectItem>
+							<SelectItem value={b.id} label={`${b.name} (${b.locations.name})`}>{b.name} ({b.locations.name})</SelectItem>
 							{/each}
 						</SelectContent>
 					</Select>
