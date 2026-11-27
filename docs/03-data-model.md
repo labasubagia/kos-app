@@ -123,3 +123,5 @@ erDiagram
 - `contracts.active` + **partial unique index** on `(room_id, tenant_id) WHERE active` → guarantees the 1-active-contract invariant per tenant.
 - `bills` unique on `(contract_id, period)`.
 - Room `status` kept in sync via application logic when opening/closing contracts.
+- Hierarchy FK chain enforces `location` > `building` > `room` (unique `(tenant_id,name)` / `(location_id,name)` / `(building_id,name)`); one tenant may hold multiple locations.
+- Payment cap: `record_payment` rejects any payment that would push the sum of payments on a bill above the bill amount (overpayment exception) — enforced both per payment and across the cumulative installments.

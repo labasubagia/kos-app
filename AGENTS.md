@@ -41,7 +41,8 @@ git push origin v1.0.0           # push the tag (release metadata only; no deplo
 ## Development Workflow (GitHub)
 - **Every task** (feature, bug, refactor) → create an **Issue** first with a label (`bug`, `enhancement`, `chore`, `docs`). Tiny typo/doc fixes may go straight to PR without an issue.
 - **Branching**: `feat/<desc>` / `fix/<desc>` off `main`; PR required. The PR body MUST include the closing keyword `fixes #<id>` (or `closes #<id>`) for its issue so GitHub auto-closes it on merge; otherwise the issue stays open after merge.
-- **PR** → Netlify deploy preview + CI (`svelte-check`, lint). Review before merging to `main`.
+- **PR** → Netlify deploy preview + CI (`svelte-check`, lint, build, and `e2e.yml`). After opening a PR, check and monitor its CI runs until all jobs pass (Actions tab / PR check list); never merge or mark done with red CI.
+
 - **Status tracking**: GitHub Projects (3-column board) — *Todo / In Progress / Done*. Assign the issue, drag columns.
 - **Prod release** (SemVer `v<major>.<minor>.<patch>`, e.g. `v1.0.0`): merging to `main` auto-deploys via `.github/workflows/deploy.yml` → GitHub Pages; create the tag to mark the release.
 - Supabase migrations handled per PR (`supabase db diff`); review before merge.
