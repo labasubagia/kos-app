@@ -2,6 +2,9 @@
 	import { onMount } from "svelte";
 	import { supabase } from "$lib/supabase";
 	import * as Table from "$lib/components/ui/table";
+	import * as Popover from "$lib/components/ui/popover";
+	import { Calendar } from "$lib/components/ui/calendar";
+	import { CalendarDate, type DateValue } from "@internationalized/date";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
 	import { toast } from "svelte-sonner";
@@ -29,7 +32,12 @@
 	let loading = $state(true);
 	let generating = $state(false);
 	const now = new Date();
-	let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+	let calDate = $state(new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1));
+	const selectedMonth = $derived(`${calDate.year}-${String(calDate.month).padStart(2, "0")}`);
+	function chooseMonth(d: DateValue | undefined) {
+		if (d) calDate = new CalendarDate(d.year, d.month, 1);
+		load();
+	}
 
 	async function load() {
 		loading = true;
@@ -66,10 +74,14 @@
 			<p class="text-sm text-muted-foreground">Monthly bills per contract</p>
 		</div>
 		<div class="flex items-center gap-3">
-			<label class="flex items-center gap-2 text-sm text-muted-foreground">
-				Period
-				<input type="month" bind:value={selectedMonth} onchange={load} class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground shadow-xs outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
-			</label>
+			<Popover.Root>
+				<Popover.Trigger class="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-accent">
+					{selectedMonth}
+				</Popover.Trigger>
+				<Popover.Content align="start" class="w-auto p-0">
+					<Calendar type="single" value={calDate} onValueChange={chooseMonth} captionLayout="dropdown" />
+				</Popover.Content>
+			</Popover.Root>
 			<Button onclick={() => generate(selectedMonth)} disabled={generating || !selectedMonth}>{generating ? "Generating…" : `Generate ${selectedMonth}`}</Button>
 		</div>
 	</div>

@@ -50,7 +50,7 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 	await page.goto("/bills");
 	const now = new Date();
 	const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-	await expect(page.locator('input[type="month"]')).toHaveValue(month);
+	await expect(page.getByRole("button", { name: month, exact: true })).toBeVisible();
 
 	// pay renterA fully → becomes paid; renterB stays unpaid
 	await recordPayment(page, `${renterA} — ${roomA}`, rent);
