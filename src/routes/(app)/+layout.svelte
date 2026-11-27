@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
-	import { Building2, MapPin, Users, FileText, Receipt, Wallet, LayoutDashboard } from "@lucide/svelte";
+	import { Building2, MapPin, Users, FileText, Receipt, Wallet, LayoutDashboard, CircleDollarSign } from "@lucide/svelte";
 	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { tenant, user, requireAuth, signOut } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button";
@@ -18,7 +18,7 @@
 		});
 	});
 
-	const nav = [
+	const nav: { href: string; label: string; icon: typeof LayoutDashboard; ownerOnly?: boolean }[] = [
 		{ href: base + "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 		{ href: base + "/locations", label: "Locations", icon: MapPin },
 		{ href: base + "/buildings", label: "Buildings", icon: Building2 },
@@ -27,7 +27,7 @@
 		{ href: base + "/contracts", label: "Contracts", icon: FileText },
 		{ href: base + "/bills", label: "Bills", icon: Receipt },
 		{ href: base + "/payments", label: "Payments", icon: Wallet },
-		{ href: base + "/members", label: "Members", icon: Users, ownerOnly: true },
+		{ href: base + "/expenses", label: "Expenses", icon: CircleDollarSign },
 	];
 
 	function initials(email: string | undefined) {
