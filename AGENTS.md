@@ -40,6 +40,7 @@ git push origin v1.0.0           # push the tag (release metadata only; no deplo
 
 ## Development Workflow (GitHub)
 - **Every task** (feature, bug, refactor) → create an **Issue** first with a label (`bug`, `enhancement`, `chore`, `docs`). Tiny typo/doc fixes may go straight to PR without an issue.
+- **Issue template**: issue bodies MUST follow the issue template — `.github/ISSUE_TEMPLATE/` (`bug_report.yml`, `feature_request.yml`, `chore.yml`) — and include the required `###` sections matching the label. The label drives which template applies: `bug` → `### Description`, `### Steps to Reproduce`, `### Expected Behavior`, `### Actual Behavior`; `enhancement` → `### Goal`, `### Acceptance Criteria`, `### Scope & Non-Goals`; `chore` → `### Context`, `### Task Breakdown`. `.github/workflows/issue-validation.yml` enforces this; an issue missing its sections fails validation, so fill them before opening the issue.
 - **Branching**: `feat/<desc>` / `fix/<desc>` off `main`; PR required. The PR body MUST include the closing keyword `fixes #<id>` (or `closes #<id>`) for its issue so GitHub auto-closes it on merge; otherwise the issue stays open after merge.
 - **PR** → Netlify deploy preview + CI (`svelte-check`, lint, build, and `e2e.yml`). After opening a PR, check and monitor its CI runs until all jobs pass (Actions tab / PR check list); never merge or mark done with red CI.
 
