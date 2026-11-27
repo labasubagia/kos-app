@@ -87,7 +87,7 @@ export async function selectOption(page: Page, labelText: string, optionText: st
 }
 
 export function uniqueName(prefix: string): string {
-  return `${prefix}_${Date.now()}`;
+  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 }
 
 export async function client(): Promise<SupabaseClient> {

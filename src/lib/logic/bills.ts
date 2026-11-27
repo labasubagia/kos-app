@@ -32,3 +32,30 @@ export function nextPeriod(period: string): string {
 	const d = new Date(y, m, 1); // month index m == next month
 	return periodKey(d);
 }
+
+/** Total paid across payments. */
+export function totalPaid(payments: { amount: number }[] | null): number {
+	return payments?.reduce((s, p) => s + Number(p.amount), 0) ?? 0;
+}
+
+/** Remaining balance = bill amount minus total paid. */
+export function balanceOf(amount: number, payments: { amount: number }[] | null): number {
+	return amount - totalPaid(payments);
+}
+
+/** Format as IDR currency, no decimals. */
+export function formatIDR(n: number): string {
+	return n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+}
+
+export type BillStatus = "unpaid" | "partial" | "paid";
+
+const statusWeight: Record<BillStatus, number> = { unpaid: 0, partial: 1, paid: 2 };
+
+/** Unpaid first (dunning), then by due date. */
+export function sortBills<T extends { status: BillStatus; due_date: string }>(bills: T[]): T[] {
+	return [...bills].toSorted((a, b) => {
+		if (statusWeight[a.status] !== statusWeight[b.status]) return statusWeight[a.status] - statusWeight[b.status];
+		return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+	});
+}

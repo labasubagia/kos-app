@@ -5,6 +5,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
 	import { toast } from "svelte-sonner";
+	import { balanceOf, formatIDR, sortBills, totalPaid } from "$lib/logic/bills";
 
 	type Bill = {
 		id: string;
@@ -27,11 +28,9 @@
 	let bills = $state<Bill[]>([]);
 	let loading = $state(true);
 	let generating = $state(false);
-const now = new Date();
-let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-	const idr = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
-	const paidOf = (b: Bill) => b.payments?.reduce((s, p) => s + Number(p.amount), 0) ?? 0;
-	const balanceOf = (b: Bill) => b.amount - paidOf(b);
+	const now = new Date();
+	let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+
 	async function load() {
 		loading = true;
 		const { data } = await supabase
@@ -45,13 +44,7 @@ let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).pa
 
 	onMount(load);
 
-	const statusWeight = { unpaid: 0, partial: 1, paid: 2 } as const;
-	const sortedBills = $derived(
-		[...bills].toSorted((a, b) => {
-			if (statusWeight[a.status] !== statusWeight[b.status]) return statusWeight[a.status] - statusWeight[b.status];
-			return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-		})
-	);
+	const sortedBills = $derived(sortBills(bills));
 
 	async function generate() {
 		generating = true;
@@ -102,9 +95,9 @@ let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).pa
 						<Table.Cell>{b.contracts.renters.name}</Table.Cell>
 						<Table.Cell>{b.contracts.rooms.name}</Table.Cell>
 						<Table.Cell>{b.due_date}</Table.Cell>
-						<Table.Cell class="text-right">{idr(b.amount)}</Table.Cell>
-						<Table.Cell class="text-right">{idr(paidOf(b))}</Table.Cell>
-						<Table.Cell class="text-right">{idr(balanceOf(b))}</Table.Cell>
+						<Table.Cell class="text-right">{formatIDR(b.amount)}</Table.Cell>
+						<Table.Cell class="text-right">{formatIDR(totalPaid(b.payments))}</Table.Cell>
+						<Table.Cell class="text-right">{formatIDR(balanceOf(b.amount, b.payments))}</Table.Cell>
 						<Table.Cell>
 							<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
 						</Table.Cell>
