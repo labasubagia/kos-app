@@ -19,6 +19,8 @@ Transitions happen only via contracts (Occupied) or admin action (Available/Main
 
 ## Bills & payments
 - One bill per period per contract. Period is marked `year-month`.
+- Bill generation is restricted to periods inside the contract's stay window — never earlier than the check-in month and never after the check-out month (`generate_bills` rejects such periods).
+- Bills can be deleted from the bills list for corrections; deleting a bill also deletes its payments.
 - Payments **can be partial**. Bill status: `Unpaid` / `Partial` / `Paid`.
 - Payments are applied to the oldest unpaid bill first (FIFO).
 - No single payment exceeds the bill amount, and the sum of payments against a bill never exceeds it (overpayment rejected by `record_payment`).
