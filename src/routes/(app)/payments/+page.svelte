@@ -62,7 +62,7 @@
 		const unpaidPeriods = (co.bills ?? [])
 			.filter((b) => b.status !== "paid")
 			.map((b) => b.period)
-			.sort();
+			.toSorted();
 		return {
 			id: co.id,
 			label: `${co.renters.name} — ${co.rooms.name} (${unpaidPeriods.join(", ")})`,
