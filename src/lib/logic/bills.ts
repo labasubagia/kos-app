@@ -9,6 +9,15 @@ export interface BillInput {
 	daysLate: number; // days since previous due_date + grace
 }
 
+/**
+ * A period (YYYY-MM) is billable for a contract only when it falls inside the
+ * stay window: >= check-in month and <= check-out month (or open-ended).
+ * Mirrors the SQL guard in generate_bills.
+ */
+export function isWithinStayWindow(period: string, startDate: string, endDate: string | null): boolean {
+	return period >= startDate.slice(0, 7) && (endDate === null || period <= endDate.slice(0, 7));
+}
+
 /** Amount = rent + late fee if prior period unpaid past its grace window. */
 export function billAmount(input: BillInput): number {
 	const late = input.previousPeriodUnpaid && input.previousPeriodPastGrace ? input.lateFee : 0;

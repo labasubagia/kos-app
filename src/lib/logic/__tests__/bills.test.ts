@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { billAmount, isPastGrace, periodKey, nextPeriod, totalPaid, balanceOf, formatIDR, sortBills } from "../bills";
+import { billAmount, isPastGrace, periodKey, nextPeriod, totalPaid, balanceOf, formatIDR, sortBills, isWithinStayWindow } from "../bills";
 
 describe("billAmount", () => {
 	it("rent only when previous period paid or within grace", () => {
@@ -25,6 +25,32 @@ describe("period helpers", () => {
 	it("advances month (December wraps year)", () => {
 		expect(nextPeriod("2026-12")).toBe("2027-01");
 		expect(nextPeriod("2026-03")).toBe("2026-04");
+	});
+});
+
+describe("isWithinStayWindow", () => {
+	const start = "2026-11-01";
+	it("allows the check-in month", () => {
+		expect(isWithinStayWindow("2026-11", start, null)).toBe(true);
+	});
+	it("allows months inside the stay", () => {
+		expect(isWithinStayWindow("2026-12", start, "2027-02-28")).toBe(true);
+		expect(isWithinStayWindow("2027-01", start, "2027-02-28")).toBe(true);
+		expect(isWithinStayWindow("2027-02", start, "2027-02-28")).toBe(true);
+	});
+	it("blocks months before check-in", () => {
+		expect(isWithinStayWindow("2026-10", start, null)).toBe(false);
+		expect(isWithinStayWindow("2025-12", start, null)).toBe(false);
+	});
+	it("blocks months after check-out", () => {
+		expect(isWithinStayWindow("2027-03", start, "2027-02-28")).toBe(false);
+	});
+	it("open-ended contract (null end) has no upper bound", () => {
+		expect(isWithinStayWindow("2030-06", start, null)).toBe(true);
+	});
+	it("Nov check-in billable in Nov; Dec check-in not", () => {
+		expect(isWithinStayWindow("2026-11", "2026-11-01", null)).toBe(true);
+		expect(isWithinStayWindow("2026-11", "2026-12-01", null)).toBe(false);
 	});
 });
 

@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { generateBills, listBillsForMonth } from "$lib/db";
+	import { deleteBill, generateBills, listActiveContractOptions, listBillsForMonth } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
+	import * as Popover from "$lib/components/ui/popover";
+	import * as Select from "$lib/components/ui/select";
+	import { CalendarDate } from "@internationalized/date";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
+	import * as Dialog from "$lib/components/ui/dialog";
+	import { Trash2 } from "@lucide/svelte";
 	import { toast } from "svelte-sonner";
-	import { balanceOf, formatIDR, sortBills, totalPaid } from "$lib/logic/bills";
+	import { balanceOf, formatIDR, isWithinStayWindow, sortBills, totalPaid } from "$lib/logic/bills";
 
 	type Bill = {
 		id: string;
@@ -23,18 +28,44 @@
 		};
 	};
 
+	type ContractOption = {
+		id: string;
+		start_date: string;
+		end_date: string | null;
+		renters: { name: string }[];
+		rooms: { name: string }[];
+	};
+
 	const statusVariant = { unpaid: "destructive", partial: "secondary", paid: "default" } as const;
 
 	let bills = $state<Bill[]>([]);
 	let loading = $state(true);
 	let generating = $state(false);
+	let constBill = $state<Bill | null>(null);
+	let genContract = $state<string>("");
+	let genContracts = $state<{ id: string; label: string }[]>([]);
+	let deleting = $state(false);
 	const now = new Date();
-	let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+	let calDate = $state(new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1));
+	let gridYear = $state(now.getFullYear());
+	let open = $state(false);
+	const selectedMonth = $derived(`${calDate.year}-${String(calDate.month).padStart(2, "0")}`);
+	const months = Array.from({ length: 12 }, (_, i) => i + 1);
+	function chooseMonth(m: number) {
+		calDate = new CalendarDate(gridYear, m, 1);
+		open = false;
+		load();
+	}
 
 	async function load() {
 		loading = true;
-		const { data } = await listBillsForMonth(selectedMonth);
+		const [{ data }, { data: cs }] = await Promise.all([
+			listBillsForMonth(selectedMonth),
+			listActiveContractOptions(),
+		]);
 		bills = (data ?? []) as Bill[];
+		const opts = (cs ?? []) as ContractOption[];
+		genContracts = opts.map((c) => ({ id: c.id, label: `${c.renters[0]?.name ?? ""} — ${c.rooms[0]?.name ?? ""}` }));
 		loading = false;
 	}
 
@@ -42,15 +73,40 @@
 
 	const sortedBills = $derived(sortBills(bills));
 
-	async function generate() {
+	async function generate(period: string) {
+		const { data: cs } = await listActiveContractOptions();
+		const all = (cs ?? []) as ContractOption[];
+		const candidates = genContract ? all.filter((c) => c.id === genContract) : all;
+		if (!candidates.some((c) => isWithinStayWindow(period, c.start_date, c.end_date))) {
+			toast.error(genContract ? `Selected contract does not cover ${period}` : `No active contract covers ${period}`);
+			return;
+		}
 		generating = true;
-		const { data, error } = await generateBills();
+		const { data, error } = await generateBills({ p_period: period, p_contract_id: genContract || null });
 		generating = false;
 		if (error) {
 			toast.error(error.message);
 			return;
 		}
-		toast.success(`Generated ${data} bill${data === 1 ? "" : "s"}`);
+		if (data === 0) {
+			toast.message("No bills created — month outside contract stay or already billed.");
+		} else {
+			toast.success(`Generated ${data} bill${data === 1 ? "" : "s"}`);
+		}
+		await load();
+	}
+
+	async function removeBill() {
+		if (!constBill) return;
+		deleting = true;
+		const { error } = await deleteBill(constBill.id);
+		deleting = false;
+		if (error) {
+			toast.error(error.message);
+			return;
+		}
+		toast.success(`Deleted bill for ${constBill.period}`);
+		constBill = null;
 		await load();
 	}
 </script>
@@ -62,11 +118,34 @@
 			<p class="text-sm text-muted-foreground">Monthly bills per contract</p>
 		</div>
 		<div class="flex items-center gap-3">
-			<label class="flex items-center gap-2 text-sm text-muted-foreground">
-				Period
-				<input type="month" bind:value={selectedMonth} onchange={load} class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground shadow-xs outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
-			</label>
-			<Button onclick={generate} disabled={generating}>{generating ? "Generating…" : "Generate this month"}</Button>
+			<Popover.Root bind:open>
+				<Popover.Trigger class="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-accent">
+					{selectedMonth}
+				</Popover.Trigger>
+				<Popover.Content align="start" class="w-auto p-3">
+					<div class="flex items-center justify-between">
+						<Button size="sm" variant="ghost" onclick={() => (gridYear -= 1)} aria-label="Previous year">‹</Button>
+						<span class="text-sm font-medium">{gridYear}</span>
+						<Button size="sm" variant="ghost" onclick={() => (gridYear += 1)} aria-label="Next year">›</Button>
+					</div>
+					<div class="mt-2 grid grid-cols-3 gap-1">
+						{#each months as m}
+							<Button size="sm" variant={m === calDate.month ? "default" : "ghost"} class="h-8" onclick={() => chooseMonth(m)}>{String(m).padStart(2, "0")}</Button>
+						{/each}
+					</div>
+				</Popover.Content>
+			</Popover.Root>
+			<Select.Root type="single" bind:value={genContract}>
+				<Select.Trigger class="h-9 w-56">
+					{genContract ? genContracts.find((c) => c.id === genContract)?.label ?? "All contracts" : "All contracts"}
+				</Select.Trigger>
+				<Select.Content>
+					{#each genContracts as gc}
+						<Select.Item value={gc.id}>{gc.label}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+			<Button onclick={() => generate(selectedMonth)} disabled={generating || !selectedMonth}>{generating ? "Generating…" : `Generate ${selectedMonth}${genContract ? " for selected" : ""}`}</Button>
 		</div>
 	</div>
 
@@ -82,6 +161,7 @@
 					<Table.Head class="text-right">Paid</Table.Head>
 					<Table.Head class="text-right">Balance</Table.Head>
 					<Table.Head>Status</Table.Head>
+					<Table.Head class="text-right">Actions</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -97,13 +177,30 @@
 						<Table.Cell>
 							<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
 						</Table.Cell>
+						<Table.Cell class="text-right">
+							<Button size="sm" variant="ghost" aria-label={`Delete bill ${b.period}`} onclick={() => (constBill = b)}>
+								<Trash2 class="h-4 w-4" />
+							</Button>
+						</Table.Cell>
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
+						<Table.Cell colspan={9} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>
-	</div>
+		<Dialog.Root open={constBill !== null} onOpenChange={(o) => { if (!o) constBill = null; }}>
+			<Dialog.Content class="sm:max-w-sm">
+				<Dialog.Header>
+					<Dialog.Title>Delete bill?</Dialog.Title>
+					<Dialog.Description>Delete bill for {constBill?.period}? Its payments will also be removed.</Dialog.Description>
+				</Dialog.Header>
+				<Dialog.Footer>
+					<Button variant="outline" onclick={() => (constBill = null)}>Cancel</Button>
+					<Button onclick={removeBill} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button>
+				</Dialog.Footer>
+			</Dialog.Content>
+		</Dialog.Root>
+		</div>
 </div>

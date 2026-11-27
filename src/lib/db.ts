@@ -11,7 +11,13 @@ export const listBillsForMonth = (period: string) =>
 		.eq("period", period)
 		.order("due_date", { ascending: true });
 
-export const generateBills = () => supabase.rpc("generate_bills");
+export const generateBills = (input?: { p_period?: string; p_contract_id?: string | null }) =>
+	supabase.rpc("generate_bills", input ?? {});
+
+export const listActiveContractOptions = () =>
+	supabase.from("contracts").select("id, start_date, end_date, renters(name), rooms(name)").eq("active", true);
+
+export const deleteBill = (id: string) => supabase.from("bills").delete().eq("id", id);
 
 // ---- payments ----
 export const listPayments = () =>

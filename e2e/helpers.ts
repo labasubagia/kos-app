@@ -81,7 +81,7 @@ export async function checkInContract(
 
 export async function generateBills(page: Page) {
 	await page.goto("/bills");
-	await page.getByRole("button", { name: /Generate this month/ }).click();
+	await page.getByRole("button", { name: /Generate \d{4}-\d{2}/ }).click();
 	await expect(page.getByText(/Generated \d+ bill/)).toBeVisible();
 }
 
@@ -120,7 +120,7 @@ export async function seedFixtures(
 		tenant_id: tid,
 		renter_id: rnt.id,
 		room_id: rm.id,
-		start_date: new Date().toISOString().slice(0, 10),
+			start_date: new Date().toISOString().slice(0, 10),
 		monthly_rent: Number(opts.rent),
 	}).select().single();
 	if (ce) throw new Error(`seed: contract: ${ce.message}`);
@@ -129,6 +129,7 @@ export async function seedFixtures(
 
 /** Generate the current month's bills via RPC. */
 export async function generateBillsApi(c: SupabaseClient): Promise<void> {
-	const { error } = await c.rpc("generate_bills");
+	const period = new Date().toISOString().slice(0, 7);
+	const { error } = await c.rpc("generate_bills", { p_period: period, p_contract_id: null });
 	if (error) throw new Error(`generate_bills: ${error.message}`);
 }
