@@ -24,18 +24,19 @@ jobs:
 
             const has = (h) => body.includes(`### ${h}`);
 
-            // Guess template by highest heading-match score
-            let best = null, bestScore = -1, missingOfBest = [];
-            for (const [t, heads] of Object.entries(expectations)) {
-              const missing = heads.filter((h) => !has(h));
-              const score = heads.length - missing.length;
-              if (score > bestScore) { bestScore = score; best = t; missingOfBest = missing; }
+            // Template is chosen by the form via its label (set in ISSUE_TEMPLATE).
+            const byLabel = { bug: expectations.bug, enhancement: expectations.feature, chore: expectations.chore };
+            const label = context.payload.issue.labels?.map((l) => l.name).find((l) => byLabel[l]);
+            if (!label) {
+              console.log(`No template label on issue #${context.issue.number}; skipping validation.`);
+              return;
             }
 
-            if (missingOfBest.length) {
+            const missing = byLabel[label].filter((h) => !has(h));
+            if (missing.length) {
               await github.rest.issues.createComment({
                 ...context.repo,
                 issue_number: context.issue.number,
-                body: `⚠️ Issue does not match the \`${best}\` template. Missing sections: ${missingOfBest.join(", ")}. Please complete them.`,
+                body: `⚠️ Issue does not match the \`${label}\` template. Missing sections: ${missing.join(", ")}. Please complete them.`,
               });
             }
