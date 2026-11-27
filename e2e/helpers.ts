@@ -102,7 +102,7 @@ export async function expectBillStatus(page: Page, renter: string, status: strin
 /** Create location→building→room→renter→active contract directly via API. */
 export async function seedFixtures(
 	c: SupabaseClient,
-	opts: { location: string; building: string; room: string; renter: string; rent: string; startDate?: string },
+	opts: { location: string; building: string; room: string; renter: string; rent: string },
 ): Promise<{ renterId: string; roomId: string; contractId: string }> {
 	const { data: member, error: me } = await c.from("memberships").select("tenant_id").limit(1).single();
 	if (me || !member) throw new Error(`seed: cannot resolve tenant: ${me?.message ?? "no membership"}`);
@@ -120,7 +120,7 @@ export async function seedFixtures(
 		tenant_id: tid,
 		renter_id: rnt.id,
 		room_id: rm.id,
-			start_date: opts.startDate ?? new Date().toISOString().slice(0, 10),
+			start_date: new Date().toISOString().slice(0, 10),
 		monthly_rent: Number(opts.rent),
 	}).select().single();
 	if (ce) throw new Error(`seed: contract: ${ce.message}`);

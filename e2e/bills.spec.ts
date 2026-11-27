@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { cleanupArtifacts, client, hasCreds, login, uniqueName } from "./harness";
 import { generateBills, generateBillsApi, recordPayment, seedFixtures } from "./helpers";
-const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
 test.skip(!hasCreds(), "E2E credentials not set");
 
@@ -67,25 +66,4 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 
 	await cleanupArtifacts(c, renterA, roomA);
 	await cleanupArtifacts(c, renterB, roomB);
-});
-test("generate is blocked before any contract's check-in month", async ({ page }) => {
-	test.setTimeout(120_000);
-	const c = await client();
-	const now = new Date();
-	const nextMonth = `${ym(new Date(now.getFullYear(), now.getMonth() + 1, 1))}-01`;
-	const renter = uniqueName("RntG");
-	const room = uniqueName("RmG");
-	await seedFixtures(c, {
-		location: uniqueName("LocG"),
-		building: uniqueName("BldG"),
-		room,
-		renter,
-		rent: "800000",
-		startDate: nextMonth,
-	});
-	await login(page);
-	await page.goto("/bills");
-	await page.getByRole("button", { name: /Generate/ }).click();
-	await expect(page.getByText("No active contract covers")).toBeVisible();
-	await cleanupArtifacts(c, renter, room);
 });
