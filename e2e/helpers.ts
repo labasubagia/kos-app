@@ -95,6 +95,7 @@ export async function generateBills(page: Page) {
 }
 
 export async function recordPayment(page: Page, contractLabel: string, amount: string) {
+	await page.goto("/payments");
 	await page.getByRole("button", { name: "Record payment" }).click();
 	await selectOption(page, "Contract", contractLabel);
 	await fillByLabel(page, "Amount (IDR)", amount);
