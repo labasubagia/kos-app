@@ -67,6 +67,7 @@ describe.skipIf(!hasCreds)("billing flow against live Supabase", () => {
 
 		const { data: contract, error: ci } = await c.rpc("check_in_contract", {
 			p_renter_id: renterId,
+			p_room_id: roomId,
 			p_start_date: today(),
 			p_end_date: null,
 			p_monthly_rent: 850000,
