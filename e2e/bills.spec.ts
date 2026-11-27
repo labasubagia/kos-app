@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { cleanupArtifacts, client, hasCreds, login, uniqueName } from "./harness";
 import { generateBills, generateBillsApi, recordPayment, seedFixtures } from "./helpers";
+const ym = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
 test.skip(!hasCreds(), "E2E credentials not set");
 
@@ -66,4 +67,50 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 
 	await cleanupArtifacts(c, renterA, roomA);
 	await cleanupArtifacts(c, renterB, roomB);
+});
+test("generating a month bills only contracts checked in by that month", async () => {
+	test.setTimeout(120_000);
+	const c = await client();
+	const now = new Date();
+	const novStart = `${ym(now)}-01`;
+	const decStart = `${ym(new Date(now.getFullYear(), now.getMonth() + 1, 1))}-01`;
+
+	const novRenters: string[] = [];
+	const novRooms: string[] = [];
+	const ids: string[] = [];
+	for (let i = 0; i < 3; i++) {
+		const renter = uniqueName(`RntN${i}`);
+		const room = uniqueName(`RmN${i}`);
+		const f = await seedFixtures(c, {
+			location: uniqueName(`LocN${i}`),
+			building: uniqueName(`BldN${i}`),
+			room,
+			renter,
+			rent: "800000",
+			startDate: novStart,
+		});
+		ids.push(f.contractId);
+		novRenters.push(renter);
+		novRooms.push(room);
+	}
+	const decRenter = uniqueName("RntD");
+	const decRoom = uniqueName("RmD");
+	const dec = await seedFixtures(c, {
+		location: uniqueName("LocD"),
+		building: uniqueName("BldD"),
+		room: decRoom,
+		renter: decRenter,
+		rent: "800000",
+		startDate: decStart,
+	});
+	ids.push(dec.contractId);
+
+	await generateBillsApi(c);
+
+	const { data: bills } = await c.from("bills").select("contract_id").in("contract_id", ids);
+	expect(bills?.length).toBe(3);
+	expect(bills?.every((b) => b.contract_id !== dec.contractId)).toBe(true);
+
+	for (let i = 0; i < 3; i++) await cleanupArtifacts(c, novRenters[i], novRooms[i]);
+	await cleanupArtifacts(c, decRenter, decRoom);
 });
