@@ -64,11 +64,13 @@ describe.skipIf(!hasCreds)("billing flow against live Supabase", () => {
 
 	it("check-in → bill → exact pay marks paid; overpayment rejected atomically; check-out frees room", async () => {
 		const { renterId, roomId } = await seedRenterRoom(850000);
+		const startDate = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+
 
 		const { data: contract, error: ci } = await c.rpc("check_in_contract", {
 			p_renter_id: renterId,
 			p_room_id: roomId,
-			p_start_date: today(),
+			p_start_date: startDate,
 			p_end_date: null,
 			p_monthly_rent: 850000,
 			p_deposit: 500000,
