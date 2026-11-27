@@ -2,7 +2,7 @@ name: Deploy Production (GitHub Pages)
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
 
 permissions:
   contents: read

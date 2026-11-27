@@ -33,8 +33,9 @@ supabase link --project-ref <staging|prod>
 supabase db push
 # deploy
 git push origin staging          # → Netlify (auto-deploys on push)
-git tag v<major>.<minor>.<patch> # → GitHub Pages (prod): SemVer tag, e.g. v1.0.0
-git push origin v1.0.0           # push the tag → GitHub Actions → GitHub Pages
+git push origin main             # → GitHub Pages (prod): auto-deploys via GitHub Actions
+git tag v<major>.<minor>.<patch> # SemVer release marker, e.g. v1.0.0
+git push origin v1.0.0           # push the tag (release metadata only; no deploy)
 ```
 
 ## Development Workflow (GitHub)
@@ -42,7 +43,7 @@ git push origin v1.0.0           # push the tag → GitHub Actions → GitHub Pa
 - **Branching**: `feat/<desc>` / `fix/<desc>` off `main`; PR required. The PR body MUST include the closing keyword `fixes #<id>` (or `closes #<id>`) for its issue so GitHub auto-closes it on merge; otherwise the issue stays open after merge.
 - **PR** → Netlify deploy preview + CI (`svelte-check`, lint). Review before merging to `main`.
 - **Status tracking**: GitHub Projects (3-column board) — *Todo / In Progress / Done*. Assign the issue, drag columns.
-- **Prod release** (SemVer `v<major>.<minor>.<patch>`, e.g. `v1.0.0`): `git tag v1.0.0 && git push origin v1.0.0` → `.github/workflows/deploy.yml` → GitHub Pages.
+- **Prod release** (SemVer `v<major>.<minor>.<patch>`, e.g. `v1.0.0`): merging to `main` auto-deploys via `.github/workflows/deploy.yml` → GitHub Pages; create the tag to mark the release.
 - Supabase migrations handled per PR (`supabase db diff`); review before merge.
 - **Merge policy**: never merge a PR without explicit user approval. Propose the PR, then wait for the user to approve before merging.
 
