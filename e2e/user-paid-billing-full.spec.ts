@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, hasCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
 import {
 	expectBillStatus,
 	generateBillsApi,
@@ -7,7 +7,7 @@ import {
 	seedFixtures,
 } from "./helpers";
 
-test.skip(!hasCreds(), "E2E credentials not set");
+ensureCreds();
 
 const setupBilledTenant = async (page: import("@playwright/test").Page) => {
 	const room = uniqueName("Rm");

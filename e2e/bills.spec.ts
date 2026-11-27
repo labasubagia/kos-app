@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, hasCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
 import { generateBills, generateBillsApi, recordPayment, seedFixtures } from "./helpers";
 
-test.skip(!hasCreds(), "E2E credentials not set");
+ensureCreds();
 
 test("bills table exposes amount/paid/balance; new bill is unpaid with zero paid", async ({ page }) => {
 	test.setTimeout(120_000);

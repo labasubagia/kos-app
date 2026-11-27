@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { createRoom, listBuildingsWithLocations, listRoomsDetailed, removeRoom, updateRoom } from "$lib/db";
 	import { toast } from "svelte-sonner";
 	import { tenant } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -81,12 +81,7 @@
 	let deletingId = $state<string | null>(null);
 
 	async function loadRooms() {
-		const { data, error } = await supabase
-			.from("rooms")
-			.select(
-				"id, building_id, name, type, capacity, monthly_rent, status, buildings(id, name, locations(name))"
-			)
-			.order("name");
+		const { data, error } = await listRoomsDetailed();
 		if (error) {
 			toast.error("Failed to load rooms", { description: error.message });
 			return;
@@ -95,10 +90,7 @@
 	}
 
 	async function loadBuildings() {
-		const { data, error } = await supabase
-			.from("buildings")
-			.select("id, name, locations!inner(name)")
-			.order("name");
+		const { data, error } = await listBuildingsWithLocations();
 		if (!error && data) {
 			buildings = (data ?? []) as unknown as Building[];
 	}
@@ -165,8 +157,8 @@
 			status: form.status
 		};
 		const { error } = form.id
-			? await supabase.from("rooms").update(payload).eq("id", form.id)
-			: await supabase.from("rooms").insert(payload);
+			? await updateRoom(form.id, payload)
+			: await createRoom(payload);
 		submitting = false;
 		if (error) {
 			formError = error.message;
@@ -182,7 +174,7 @@
 
 	async function deleteRoom(room: Room) {
 		deletingId = room.id;
-		const { error } = await supabase.from("rooms").delete().eq("id", room.id);
+		const { error } = await removeRoom(room.id);
 		deletingId = null;
 		if (error) {
 			if (error.code === "23503") {

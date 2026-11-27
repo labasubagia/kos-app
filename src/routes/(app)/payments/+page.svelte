@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { listActiveContractsWithOutstanding, listPayments, recordPayment } from "$lib/db";
 	import { Download, Printer, Receipt } from "@lucide/svelte";
 	import { downloadCsv, toCsv, todayStamp, type CsvCell } from "$lib/csv";
 	import { tenant } from "$lib/stores/auth.svelte.ts";
@@ -13,6 +13,7 @@
 	import * as Select from "$lib/components/ui/select";
 	import { Button } from "$lib/components/ui/button";
 	import { toast } from "svelte-sonner";
+	import { formatIDR } from "$lib/logic/bills";
 
 	type Payment = {
 		id: string;
@@ -34,19 +35,13 @@
 	let arrears = $state<{ renter: string; room: string; period: string; amount: number; status: string }[]>([]);
 	let loading = $state(true);
 
-	const idr = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+	const idr = formatIDR;
 
 	async function load() {
 		loading = true;
 		const [p, c] = await Promise.all([
-			supabase
-				.from("payments")
-				.select("*, bills!inner(period, contracts!inner(rooms(name), renters(name)))")
-				.order("date", { ascending: false }),
-		supabase
-			.from("contracts")
-			.select("id, rooms(name), renters(name), bills(amount, status, period)")
-			.eq("active", true),
+		listPayments(),
+		listActiveContractsWithOutstanding(),
 	]);
 	payments = (p.data ?? []) as Payment[];
 	const billRows = (c.data ?? []) as unknown as {
@@ -110,7 +105,7 @@
 			return;
 		}
 		payBusy = true;
-		const { error } = await supabase.rpc("record_payment", {
+		const { error } = await recordPayment({
 			p_contract_id: payContract,
 			p_amount: Number(payAmount),
 			p_method: payMethod,

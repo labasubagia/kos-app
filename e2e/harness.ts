@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { type Locator, type Page } from "@playwright/test";
+import { test, type Locator, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 function envFromDotEnv(): Record<string, string> {
@@ -25,6 +25,16 @@ const SUPABASE_ANON_KEY =
 
 export function hasCreds(): boolean {
   return !!(EMAIL && PASS && SUPABASE_ANON_KEY);
+}
+
+/**
+ * Skip locally when credentials are absent, but fail loudly in CI so a PR
+ * never goes green on silently-skipped coverage.
+ */
+export function ensureCreds(): void {
+	if (hasCreds()) return;
+	if (process.env.CI) throw new Error("E2E credentials not set (E2E_EMAIL/E2E_PASS)");
+	test.skip(true, "E2E credentials not set");
 }
 
 /**

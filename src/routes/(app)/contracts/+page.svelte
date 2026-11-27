@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { checkInContract, checkOutContract, extendContract, listAvailableRooms, listContracts, listRenters } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Input from "$lib/components/ui/input";
@@ -11,6 +11,7 @@
 	import DatePicker from "$lib/components/date-picker.svelte";
 	import { toast } from "svelte-sonner";
 	import { depositRefund, isValidContractDates } from "$lib/logic/contracts";
+	import { formatIDR } from "$lib/logic/bills";
 
 	type Building = { name: string; locations: { name: string } };
 	type Room = { id: string; name: string; status: string; buildings: Building | null };
@@ -34,16 +35,16 @@
 	let renters = $state<Renter[]>([]);
 	let loading = $state(true);
 
-	const idr = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+	const idr = formatIDR;
 	const roomLabel = (r: { name: string; buildings?: Building | null }) =>
 		[r.buildings?.locations?.name, r.buildings?.name, r.name].filter(Boolean).join(" – ");
 
 	async function load() {
 		loading = true;
 		const [c, r, rn] = await Promise.all([
-			supabase.from("contracts").select("*, rooms(buildings(locations(name), name), name), renters(name)").order("start_date", { ascending: false }),
-			supabase.from("rooms").select("id, name, status, buildings(locations(name), name)").eq("status", "available").order("name"),
-			supabase.from("renters").select("id, name").order("name"),
+		listContracts(),
+		listAvailableRooms(),
+		listRenters(),
 		]);
 		contracts = (c.data ?? []) as unknown as Contract[];
 		rooms = (r.data ?? []) as unknown as Room[];
@@ -83,7 +84,7 @@
 			return;
 		}
 		ciBusy = true;
-		const { error } = await supabase.rpc("check_in_contract", {
+		const { error } = await checkInContract({
 			p_renter_id: ciRenter,
 			p_room_id: ciRoom,
 			p_start_date: ciStart,
@@ -124,7 +125,7 @@
 		}
 		void (async () => {
 			extBusy = true;
-			const { error } = await supabase.rpc("extend_contract", {
+			const { error } = await extendContract({
 				p_contract_id: extendTarget.id,
 				p_new_end_date: extEnd,
 			});
@@ -156,7 +157,7 @@
 		if (!checkoutTarget) return;
 		void (async () => {
 			coBusy = true;
-			const { data, error } = await supabase.rpc("check_out_contract", {
+			const { data, error } = await checkOutContract({
 				p_contract_id: checkoutTarget.id,
 				p_deductions: Number(coDeductions ?? 0),
 			});

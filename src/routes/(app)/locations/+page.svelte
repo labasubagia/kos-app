@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { createLocation, listLocations, removeLocation, updateLocation } from "$lib/db";
 	import { toast } from "svelte-sonner";
 	import { tenant } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -39,10 +39,7 @@
 	let deletingId = $state<string | null>(null);
 
 	async function loadLocations() {
-		const { data, error } = await supabase
-			.from("locations")
-			.select("id, name, buildings(count)")
-			.order("name");
+		const { data, error } = await listLocations();
 		if (error) {
 			toast.error("Failed to load locations", { description: error.message });
 			return;
@@ -75,10 +72,7 @@
 		if (!validate()) return;
 		submitting = true;
 		if (form.id) {
-			const { error } = await supabase
-				.from("locations")
-				.update({ name: form.name.trim() })
-				.eq("id", form.id);
+			const { error } = await updateLocation(form.id, { name: form.name.trim() });
 			submitting = false;
 			if (error) {
 				formError = error.message;
@@ -87,9 +81,9 @@
 			}
 			toast.success("Location updated");
 		} else {
-			const { error } = await supabase.from("locations").insert({
+			const { error } = await createLocation({
 				tenant_id: $tenant?.tenantId,
-				name: form.name.trim()
+				name: form.name.trim(),
 			});
 			submitting = false;
 			if (error) {
@@ -105,7 +99,7 @@
 
 	async function deleteLocation(loc: Location) {
 		deletingId = loc.id;
-		const { error } = await supabase.from("locations").delete().eq("id", loc.id);
+		const { error } = await removeLocation(loc.id);
 		deletingId = null;
 		if (error) {
 			if (error.code === "23503") {

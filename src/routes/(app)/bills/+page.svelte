@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { generateBills, listBillsForMonth } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
@@ -33,11 +33,7 @@
 
 	async function load() {
 		loading = true;
-		const { data } = await supabase
-			.from("bills")
-			.select("*, payments(amount), contracts!inner(rooms(name), renters(name))")
-			.eq("period", selectedMonth)
-			.order("due_date", { ascending: true });
+		const { data } = await listBillsForMonth(selectedMonth);
 		bills = (data ?? []) as Bill[];
 		loading = false;
 	}
@@ -48,7 +44,7 @@
 
 	async function generate() {
 		generating = true;
-		const { data, error } = await supabase.rpc("generate_bills");
+		const { data, error } = await generateBills();
 		generating = false;
 		if (error) {
 			toast.error(error.message);

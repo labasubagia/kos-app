@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { hasCreds, login } from "./harness";
+import { ensureCreds, login } from "./harness";
 
-test.skip(!hasCreds(), "E2E credentials not set (E2E_EMAIL/E2E_PASS)");
+ensureCreds();
 
 test("owner signs in and sees dashboard", async ({ page }) => {
   await login(page);

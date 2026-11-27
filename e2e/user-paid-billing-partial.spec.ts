@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, hasCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
 import {
 	expectBillStatus,
 	generateBillsApi,
@@ -7,7 +7,7 @@ import {
 	seedFixtures,
 } from "./helpers";
 
-test.skip(!hasCreds(), "E2E credentials not set");
+ensureCreds();
 
 test("partial pay → overpayment rejected (stays partial) → completes with exact remainder", async ({ page }) => {
 	test.setTimeout(120_000);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { createBuilding, listBuildings, listLocationOptions, removeBuilding, updateBuilding } from "$lib/db";
 	import { toast } from "svelte-sonner";
 	import { tenant } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -52,10 +52,7 @@
 	let deletingId = $state<string | null>(null);
 
 	async function loadBuildings() {
-		const { data, error } = await supabase
-			.from("buildings")
-			.select("id, name, locations(id, name)")
-			.order("name");
+		const { data, error } = await listBuildings();
 		if (error) {
 			toast.error("Failed to load buildings", { description: error.message });
 			return;
@@ -64,7 +61,7 @@
 	}
 
 	async function loadLocations() {
-		const { data } = await supabase.from("locations").select("id, name").order("name");
+		const { data } = await listLocationOptions();
 		if (data) locations = (data ?? []) as unknown as Location[];
 	}
 
@@ -97,10 +94,7 @@
 		if (!validate()) return;
 		submitting = true;
 		if (form.id) {
-			const { error } = await supabase
-				.from("buildings")
-				.update({ name: form.name.trim(), location_id: form.location_id })
-				.eq("id", form.id);
+			const { error } = await updateBuilding(form.id, { name: form.name.trim(), location_id: form.location_id });
 			submitting = false;
 			if (error) {
 				formError = error.message;
@@ -109,10 +103,10 @@
 			}
 			toast.success("Building updated");
 		} else {
-			const { error } = await supabase.from("buildings").insert({
+			const { error } = await createBuilding({
 				tenant_id: $tenant?.tenantId,
 				location_id: form.location_id,
-				name: form.name.trim()
+				name: form.name.trim(),
 			});
 			submitting = false;
 			if (error) {
@@ -128,7 +122,7 @@
 
 	async function deleteBuilding(b: Building) {
 		deletingId = b.id;
-		const { error } = await supabase.from("buildings").delete().eq("id", b.id);
+		const { error } = await removeBuilding(b.id);
 		deletingId = null;
 		if (error) {
 			if (error.code === "23503") {
