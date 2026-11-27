@@ -78,10 +78,7 @@
 			return;
 		}
 		generating = true;
-		const { data, error } = await supabase.rpc("generate_bills", {
-			p_period: period,
-			p_contract_id: genContract || null,
-		});
+		const { data, error } = await supabase.rpc("generate_bills", genContract ? { p_period: period, p_contract_id: genContract } : { p_period: period });
 		generating = false;
 		if (error) {
 			toast.error(error.message);
