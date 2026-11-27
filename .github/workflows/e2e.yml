@@ -32,6 +32,20 @@ jobs:
         with:
           version: "^2.20.9"
 
+      - name: Cache Supabase Docker images
+        id: sb-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/supabase-images.tar.gz
+          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v3
+
+      - name: Load cached Supabase images (best-effort)
+        if: steps.sb-cache.outputs.cache-hit == 'true'
+        run: |
+          set +e
+          gzip -t /tmp/supabase-images.tar.gz || true
+          gzip -dc /tmp/supabase-images.tar.gz | docker load
+
       - name: Start local Supabase (Docker)
         run: |
           set -euo pipefail
@@ -47,6 +61,26 @@ jobs:
           echo "supabase start failed after 5 attempts" >&2
           exit 1
 
+
+      - name: Save Supabase Docker images
+        id: sb-save
+        if: steps.sb-cache.outputs.cache-hit != 'true'
+        run: |
+          if ! docker save $(docker ps -aq --format '{{.Image}}' | sort -u) > /tmp/supabase-images.tar || ! test -s /tmp/supabase-images.tar; then
+            echo "no supabase images to cache; skipping"
+            echo "saved=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gzip < /tmp/supabase-images.tar > /tmp/supabase-images.tar.gz
+          rm -f /tmp/supabase-images.tar
+          echo "saved=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit Supabase image cache
+        if: steps.sb-cache.outputs.cache-hit != 'true' && steps.sb-save.outputs.saved == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/supabase-images.tar.gz
+          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v3
 
       - name: Capture local Supabase endpoints
         id: sb
