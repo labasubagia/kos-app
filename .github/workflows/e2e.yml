@@ -32,7 +32,19 @@ jobs:
         run: npm install --no-save supabase@2.20.9
 
       - name: Start local Supabase (Docker)
-        run: npx supabase start
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 5); do
+            echo "== supabase start attempt $i =="
+            if npx supabase start; then
+              echo "supabase stack ready"
+              exit 0
+            fi
+            echo "attempt $i failed; retrying in 25s"
+            sleep 25
+          done
+          echo "supabase start failed after 5 attempts" >&2
+          exit 1
 
       - name: Capture local Supabase endpoints
         id: sb
