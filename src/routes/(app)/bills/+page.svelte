@@ -3,8 +3,7 @@
 	import { supabase } from "$lib/supabase";
 	import * as Table from "$lib/components/ui/table";
 	import * as Popover from "$lib/components/ui/popover";
-	import { Calendar } from "$lib/components/ui/calendar";
-	import { CalendarDate, type DateValue } from "@internationalized/date";
+	import { CalendarDate } from "@internationalized/date";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
 	import { toast } from "svelte-sonner";
@@ -33,9 +32,12 @@
 	let generating = $state(false);
 	const now = new Date();
 	let calDate = $state(new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1));
+	let open = $state(false);
 	const selectedMonth = $derived(`${calDate.year}-${String(calDate.month).padStart(2, "0")}`);
-	function chooseMonth(d: DateValue | undefined) {
-		if (d) calDate = new CalendarDate(d.year, d.month, 1);
+	const months = Array.from({ length: 12 }, (_, i) => i + 1);
+	function chooseMonth(m: number) {
+		calDate = new CalendarDate(calDate.year, m, 1);
+		open = false;
 		load();
 	}
 
@@ -74,12 +76,21 @@
 			<p class="text-sm text-muted-foreground">Monthly bills per contract</p>
 		</div>
 		<div class="flex items-center gap-3">
-			<Popover.Root>
+			<Popover.Root bind:open>
 				<Popover.Trigger class="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-accent">
 					{selectedMonth}
 				</Popover.Trigger>
-				<Popover.Content align="start" class="w-auto p-0">
-					<Calendar type="single" value={calDate} onValueChange={chooseMonth} captionLayout="dropdown" />
+				<Popover.Content align="start" class="w-auto p-3">
+					<div class="flex items-center justify-between">
+						<Button size="sm" variant="ghost" onclick={() => (calDate = new CalendarDate(calDate.year - 1, calDate.month, 1))} aria-label="Previous year">‹</Button>
+						<span class="text-sm font-medium">{calDate.year}</span>
+						<Button size="sm" variant="ghost" onclick={() => (calDate = new CalendarDate(calDate.year + 1, calDate.month, 1))} aria-label="Next year">›</Button>
+					</div>
+					<div class="mt-2 grid grid-cols-3 gap-1">
+						{#each months as m}
+							<Button size="sm" variant={m === calDate.month ? "default" : "ghost"} class="h-8" onclick={() => chooseMonth(m)}>{String(m).padStart(2, "0")}</Button>
+						{/each}
+					</div>
 				</Popover.Content>
 			</Popover.Root>
 			<Button onclick={() => generate(selectedMonth)} disabled={generating || !selectedMonth}>{generating ? "Generating…" : `Generate ${selectedMonth}`}</Button>
