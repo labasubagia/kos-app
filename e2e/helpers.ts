@@ -81,7 +81,17 @@ export async function checkInContract(
 
 export async function generateBills(page: Page) {
 	await page.goto("/bills");
-	await page.getByRole("button", { name: /Generate \d{4}-\d{2}/ }).click();
+	// RPC is idempotent (unique contract_id+period); retry guards against a
+	// pre-hydration click that fires no request (toast never appears).
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await page.getByRole("button", { name: /Generate \d{4}-\d{2}/ }).click();
+		try {
+			await expect(page.getByText(/Generated \d+ bill/)).toBeVisible({ timeout: 10_000 });
+			return;
+		} catch {
+			// no toast yet; retry
+		}
+	}
 	await expect(page.getByText(/Generated \d+ bill/)).toBeVisible({ timeout: 15_000 });
 }
 
