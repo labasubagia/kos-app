@@ -61,6 +61,12 @@
 	const sortedBills = $derived(sortBills(bills));
 
 	async function generate(period: string) {
+		const { data: cs } = await supabase.from("contracts").select("start_date").eq("active", true);
+		const starts = (cs ?? []).map((c) => c.start_date.slice(0, 7)).toSorted();
+		if (starts.length && period < starts[0]) {
+			toast.error(`Cannot generate — earliest check-in is ${starts[0]}`);
+			return;
+		}
 		generating = true;
 		const { data, error } = await supabase.rpc("generate_bills", { p_period: period });
 		generating = false;
