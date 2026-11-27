@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { fillByLabel, selectOption } from "./harness";
+import { type SupabaseClient } from "@supabase/supabase-js";
 
 const MONTHS = [
 	"January", "February", "March", "April", "May", "June",
@@ -96,4 +97,38 @@ export async function expectBillStatus(page: Page, renter: string, status: strin
 	await page.goto("/bills");
 	const row = page.locator("tbody tr", { hasText: renter });
 	await expect(row.getByText(status)).toBeVisible();
+}
+
+/** Create location→building→room→renter→active contract directly via API. */
+export async function seedFixtures(
+	c: SupabaseClient,
+	opts: { location: string; building: string; room: string; renter: string; rent: string },
+): Promise<{ renterId: string; roomId: string; contractId: string }> {
+	const { data: member, error: me } = await c.from("memberships").select("tenant_id").limit(1).single();
+	if (me || !member) throw new Error(`seed: cannot resolve tenant: ${me?.message ?? "no membership"}`);
+	const tid = member.tenant_id;
+
+	const { data: loc, error: le } = await c.from("locations").insert({ tenant_id: tid, name: opts.location }).select().single();
+	if (le) throw new Error(`seed: location: ${le.message}`);
+	const { data: bld, error: be } = await c.from("buildings").insert({ tenant_id: tid, location_id: loc.id, name: opts.building }).select().single();
+	if (be) throw new Error(`seed: building: ${be.message}`);
+	const { data: rm, error: re } = await c.from("rooms").insert({ tenant_id: tid, building_id: bld.id, name: opts.room, monthly_rent: Number(opts.rent) }).select().single();
+	if (re) throw new Error(`seed: room: ${re.message}`);
+	const { data: rnt, error: rne } = await c.from("renters").insert({ tenant_id: tid, name: opts.renter, phone: "081200000001" }).select().single();
+	if (rne) throw new Error(`seed: renter: ${rne.message}`);
+	const { data: contract, error: ce } = await c.from("contracts").insert({
+		tenant_id: tid,
+		renter_id: rnt.id,
+		room_id: rm.id,
+		start_date: new Date().toISOString().slice(0, 10),
+		monthly_rent: Number(opts.rent),
+	}).select().single();
+	if (ce) throw new Error(`seed: contract: ${ce.message}`);
+	return { renterId: rnt.id, roomId: rm.id, contractId: contract.id };
+}
+
+/** Generate the current month's bills via RPC. */
+export async function generateBillsApi(c: SupabaseClient): Promise<void> {
+	const { error } = await c.rpc("generate_bills");
+	if (error) throw new Error(`generate_bills: ${error.message}`);
 }

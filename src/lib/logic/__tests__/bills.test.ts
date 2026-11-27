@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { billAmount, isPastGrace, periodKey, nextPeriod } from "../bills";
+import { billAmount, isPastGrace, periodKey, nextPeriod, totalPaid, balanceOf, formatIDR } from "../bills";
 
 describe("billAmount", () => {
 	it("rent only when previous period paid or within grace", () => {
@@ -25,5 +25,20 @@ describe("period helpers", () => {
 	it("advances month (December wraps year)", () => {
 		expect(nextPeriod("2026-12")).toBe("2027-01");
 		expect(nextPeriod("2026-03")).toBe("2026-04");
+	});
+});
+
+describe("payment sums", () => {
+	it("totalPaid sums amounts, treats null as 0", () => {
+		expect(totalPaid([{ amount: 500 }, { amount: 50 }])).toBe(550);
+		expect(totalPaid(null)).toBe(0);
+		expect(totalPaid([])).toBe(0);
+	});
+	it("balanceOf subtracts paid from amount", () => {
+		expect(balanceOf(500, [{ amount: 200 }])).toBe(300);
+		expect(balanceOf(500, null)).toBe(500);
+	});
+	it("formatIDR renders IDR without decimals", () => {
+		expect(formatIDR(550000)).toContain("550.000");
 	});
 });

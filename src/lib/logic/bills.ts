@@ -32,3 +32,18 @@ export function nextPeriod(period: string): string {
 	const d = new Date(y, m, 1); // month index m == next month
 	return periodKey(d);
 }
+
+/** Total paid across payments. */
+export function totalPaid(payments: { amount: number }[] | null): number {
+	return payments?.reduce((s, p) => s + Number(p.amount), 0) ?? 0;
+}
+
+/** Remaining balance = bill amount minus total paid. */
+export function balanceOf(amount: number, payments: { amount: number }[] | null): number {
+	return amount - totalPaid(payments);
+}
+
+/** Format as IDR currency, no decimals. */
+export function formatIDR(n: number): string {
+	return n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+}
