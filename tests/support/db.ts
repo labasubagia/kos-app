@@ -23,6 +23,7 @@ export const E2E_EMAIL = pick("E2E_EMAIL");
 export const E2E_PASS = pick("E2E_PASS");
 export const SUPABASE_URL = pick("PUBLIC_SUPABASE_URL");
 export const SUPABASE_ANON_KEY = pick("PUBLIC_SUPABASE_ANON_KEY");
+export const SERVICE_ROLE_KEY = pick("SERVICE_ROLE_KEY");
 
 export function hasCreds(): boolean {
   return !!(E2E_EMAIL && E2E_PASS && SUPABASE_URL && SUPABASE_ANON_KEY);

@@ -1,16 +1,18 @@
 // Multi-tenant RLS isolation against a live Supabase (local Docker stack or a
 // disposable test project). Creates two owners/tenants via the service-role
 // key, then asserts each anon client sees only its own rows. Ported from the
-// former supabase/tests/e2e.mjs.
+// former supabase/tests/e2e.mjs (its generate_bills smoke-call, which asserted
+// no error, was dropped).
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, hasCreds } from "../support/db";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../support/db";
 import { hasServiceCreds, serviceClient } from "../support/service";
 
-// Skip unless both anon creds and a service-role key are configured (CI must
-// inject SERVICE_ROLE_KEY to enable RLS coverage). The anon gate still fails
-// loudly in CI via requireCreds() in billing-flow.test.ts.
-const SKIP = !(hasCreds() && hasServiceCreds());
+// Skip unless base Supabase endpoints + service-role key are configured (CI
+// must inject SERVICE_ROLE_KEY; the anon gate fails loudly in CI via
+// requireCreds() in billing-flow.test.ts).
+const BASE_OK = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+const SKIP = !(BASE_OK && hasServiceCreds());
 
 async function signIn(email: string): Promise<SupabaseClient> {
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
