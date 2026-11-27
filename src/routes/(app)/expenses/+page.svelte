@@ -57,8 +57,8 @@
 	const emptyForm = () => ({
 		id: "" as string,
 		category: "none" as string,
-		location_id: "" as string,
-		building_id: "" as string,
+		location_id: "none" as string,
+		building_id: "none" as string,
 		amount: "" as string,
 		date: "" as string,
 		notes: "" as string
@@ -73,8 +73,7 @@
 		const { data, error } = await supabase
 			.from("expenses")
 			.select("id, category, amount, date, notes, location_id, building_id, locations(id, name), buildings(id, name, locations(name))")
-			.order("date", { ascending: false })
-			.order("created_at", { ascending: false });
+			.order("date", { ascending: false });
 		if (error) {
 			toast.error("Failed to load expenses", { description: error.message });
 			return;
@@ -106,8 +105,8 @@
 		form = {
 			id: e.id,
 			category: e.category ?? "none",
-			location_id: e.location_id ?? "",
-			building_id: e.building_id ?? "",
+			location_id: e.location_id ?? "none",
+			building_id: e.building_id ?? "none",
 			amount: String(e.amount),
 			date: e.date,
 			notes: e.notes ?? ""
@@ -127,8 +126,8 @@
 		const payload = {
 			tenant_id: $tenant?.tenantId,
 			category: form.category === "none" ? null : form.category,
-			location_id: form.location_id || null,
-			building_id: form.building_id || null,
+			location_id: form.location_id === "none" ? null : form.location_id,
+			building_id: form.building_id === "none" ? null : form.building_id,
 			amount,
 			date: form.date || undefined,
 			notes: form.notes.trim() || null
@@ -255,7 +254,7 @@
 					<Select type="single" bind:value={form.location_id}>
 						<SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">None</SelectItem>
+							<SelectItem value="none">None</SelectItem>
 							{#each locations as l}
 								<SelectItem value={l.id}>{l.name}</SelectItem>
 							{/each}
@@ -267,7 +266,7 @@
 					<Select type="single" bind:value={form.building_id}>
 						<SelectTrigger><SelectValue placeholder="Select building" /></SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">None</SelectItem>
+							<SelectItem value="none">None</SelectItem>
 							{#each buildings as b}
 								<SelectItem value={b.id}>{b.name} ({b.locations.name})</SelectItem>
 							{/each}
