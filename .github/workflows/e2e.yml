@@ -37,11 +37,11 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /tmp/supabase-images.tar.gz
-          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v1
+          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v2
 
       - name: Load cached Supabase images
         if: steps.sb-cache.outputs.cache-hit == 'true'
-        run: docker load -i /tmp/supabase-images.tar.gz
+        run: gzip -dc /tmp/supabase-images.tar.gz | docker load
 
       - name: Start local Supabase (Docker)
         run: |
@@ -61,14 +61,14 @@ jobs:
       - name: Save Supabase Docker images
         if: steps.sb-cache.outputs.cache-hit != 'true'
         run: |
-          docker save $(docker images --format '{{.Repository}}:{{.Tag}}' | grep -E '^supabase/') | gzip > /tmp/supabase-images.tar.gz
+          docker save $(docker ps -aq --format '{{.Image}}' | sort -u) | gzip > /tmp/supabase-images.tar.gz
 
       - name: Commit Supabase image cache
         if: steps.sb-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: /tmp/supabase-images.tar.gz
-          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v1
+          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v2
 
       - name: Capture local Supabase endpoints
         id: sb
