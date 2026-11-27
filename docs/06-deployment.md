@@ -32,6 +32,7 @@
 - SQL migrations handled per PR (`supabase db diff`); review before merge. Ensure forward/backward compatibility.
 - Apply via Supabase CLI: `supabase link --project-ref <id>` then `supabase db push` per env.
 - Never manual migrations in the dashboard.
+- After pushing a migration that changes an RPC signature (e.g. `generate_bills` gaining `p_contract_id`), PostgREST must reload its schema cache or clients hit `Could not find the function … in the schema cache`. `20260101000013` ends with `pg_notify('pgrst','reload schema')` to self-heal on apply. For a DB that already ran the migration before that line existed, run once: `select pg_notify('pgrst','reload schema');`.
 
 ## Multi-tenant (SaaS)
 - Each env (staging/prod) has its own tenant dataset — staging data never mixes with prod.
