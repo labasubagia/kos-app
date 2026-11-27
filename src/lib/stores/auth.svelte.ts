@@ -1,4 +1,5 @@
 import { goto } from "$app/navigation";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 import { get, writable } from "svelte/store";
 import { supabase } from "$lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -66,7 +67,7 @@ export async function signOut(): Promise<void> {
 	user.set(null);
 	tenant.set(null);
 	status.set("unauthenticated");
-	await goto("/login");
+	await goto(base + "/login");
 }
 
 export async function requireAuth(target: string): Promise<boolean> {
@@ -75,11 +76,11 @@ export async function requireAuth(target: string): Promise<boolean> {
 		await refresh();
 	}
 	if (get(status) === "unauthenticated") {
-		await goto(`/login?redirect=${encodeURIComponent(target)}`);
+		await goto(base + "/login?redirect=" + encodeURIComponent(target));
 		return false;
 	}
 	if (get(status) === "no-tenant") {
-		await goto("/create-tenant?redirect=" + encodeURIComponent(target));
+		await goto(base + "/create-tenant?redirect=" + encodeURIComponent(target));
 		return false;
 	}
 	return true;
