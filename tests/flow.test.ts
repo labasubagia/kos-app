@@ -77,7 +77,8 @@ describe.skipIf(!hasCreds)("billing flow against live Supabase", () => {
 			p_late_fee_per_period: 25000,
 		});
 		expect(ci).toBeNull();
-		const contractId = fieldString(contract, "id");
+		expect(typeof contract).toBe("string");
+		const contractId = contract as string;
 		created.push({ kind: "contracts", id: contractId });
 
 		const { data: room, error: re } = await c.from("rooms").select("status").eq("id", roomId).single();
