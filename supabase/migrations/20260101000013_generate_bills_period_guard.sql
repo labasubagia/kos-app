@@ -54,3 +54,4 @@ begin
   return v_created;
 end;
 $$;
+select pg_notify('pgrst', 'reload schema');
