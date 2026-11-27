@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 
 let raw = "";
 try {
-	raw = execFileSync("npx", ["supabase", "status", "-o", "env"], {
+	raw = execFileSync("supabase", ["status", "-o", "env"], {
 		encoding: "utf8",
 		stdio: ["ignore", "pipe", "pipe"],
 	});
