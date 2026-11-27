@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { supabase } from "$lib/supabase";
-	import * as Card from "$lib/components/ui/card";
 	import * as Table from "$lib/components/ui/table";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Input from "$lib/components/ui/input";
@@ -177,14 +176,13 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-semibold">Contracts</h1>
+			<h1 class="text-2xl font-bold">Contracts</h1>
 			<p class="text-sm text-muted-foreground">Check-in, extend, and check-out</p>
 		</div>
 		<Button onclick={() => { resetCheckIn(); openCheckIn = true; }}>Check-in</Button>
 	</div>
 
-	<Card.Root>
-		<Card.Content class="p-0">
+<div class="rounded-lg border">
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
@@ -228,8 +226,7 @@
 					{/each}
 				</Table.Body>
 			</Table.Root>
-		</Card.Content>
-	</Card.Root>
+</div>
 
 	<!-- Check-in dialog -->
 	<Dialog.Root bind:open={openCheckIn}>

@@ -124,7 +124,7 @@
 
 <div class="space-y-6">
 	<div>
-		<h1 class="text-2xl font-semibold">Dashboard</h1>
+		<h1 class="text-2xl font-bold">Dashboard</h1>
 		<p class="text-sm text-muted-foreground">Overview of rooms, income, arrears, and contracts</p>
 	</div>
 

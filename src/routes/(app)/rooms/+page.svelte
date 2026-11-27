@@ -7,7 +7,6 @@
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
-	import { Card, CardContent, CardHeader, CardTitle } from "$lib/components/ui/card/index.js";
 	import {
 		Table,
 		TableBody,
@@ -205,12 +204,18 @@
 </script>
 
 <svelte:head><title>Rooms</title></svelte:head>
-<Card>
-	<CardHeader class="flex-row items-center justify-between space-y-0">
-		<CardTitle>Rooms</CardTitle>
-		<Button onclick={openCreate}><Plus /> Add room</Button>
-	</CardHeader>
-	<CardContent>
+<div class="space-y-6">
+	<div class="flex items-center justify-between">
+		<div>
+			<h1 class="text-2xl font-bold">Rooms</h1>
+			<p class="text-sm text-muted-foreground">Manage rooms within buildings</p>
+		</div>
+		<div class="flex gap-2">
+			<Button onclick={openCreate}><Plus class="h-4 w-4" /> Add room</Button>
+		</div>
+	</div>
+
+	<div class="rounded-lg border">
 		{#if loading}
 			<p class="text-sm text-muted-foreground">Loading…</p>
 		{:else if rooms.length === 0}
@@ -260,8 +265,8 @@
 				</TableBody>
 			</Table>
 		{/if}
-	</CardContent>
-</Card>
+	</div>
+</div>
 
 <Dialog bind:open={dialogOpen}>
 	<DialogContent class="sm:max-w-lg">

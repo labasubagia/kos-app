@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { supabase } from "$lib/supabase";
-	import * as Card from "$lib/components/ui/card";
 	import * as Table from "$lib/components/ui/table";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
@@ -60,48 +59,46 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-semibold">Bills</h1>
+			<h1 class="text-2xl font-bold">Bills</h1>
 			<p class="text-sm text-muted-foreground">Monthly bills per contract</p>
 		</div>
 		<Button onclick={generate} disabled={generating}>{generating ? "Generating…" : "Generate this month"}</Button>
 	</div>
 
-	<Card.Root>
-		<Card.Content class="p-0">
-			<Table.Root>
-				<Table.Header>
+	<div class="rounded-lg border">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Period</Table.Head>
+					<Table.Head>Renter</Table.Head>
+					<Table.Head>Room</Table.Head>
+					<Table.Head>Due</Table.Head>
+					<Table.Head class="text-right">Amount</Table.Head>
+					<Table.Head class="text-right">Paid</Table.Head>
+					<Table.Head class="text-right">Balance</Table.Head>
+					<Table.Head>Status</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each bills as b (b.id)}
 					<Table.Row>
-						<Table.Head>Period</Table.Head>
-						<Table.Head>Renter</Table.Head>
-						<Table.Head>Room</Table.Head>
-						<Table.Head>Due</Table.Head>
-						<Table.Head class="text-right">Amount</Table.Head>
-						<Table.Head class="text-right">Paid</Table.Head>
-						<Table.Head class="text-right">Balance</Table.Head>
-						<Table.Head>Status</Table.Head>
+						<Table.Cell class="font-mono">{b.period}</Table.Cell>
+						<Table.Cell>{b.contracts.renters.name}</Table.Cell>
+						<Table.Cell>{b.contracts.rooms.name}</Table.Cell>
+						<Table.Cell>{b.due_date}</Table.Cell>
+						<Table.Cell class="text-right">{idr(b.amount)}</Table.Cell>
+						<Table.Cell class="text-right">{idr(paidOf(b))}</Table.Cell>
+						<Table.Cell class="text-right">{idr(balanceOf(b))}</Table.Cell>
+						<Table.Cell>
+							<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
+						</Table.Cell>
 					</Table.Row>
-				</Table.Header>
-				<Table.Body>
-					{#each bills as b (b.id)}
-						<Table.Row>
-							<Table.Cell class="font-mono">{b.period}</Table.Cell>
-							<Table.Cell>{b.contracts.renters.name}</Table.Cell>
-							<Table.Cell>{b.contracts.rooms.name}</Table.Cell>
-							<Table.Cell>{b.due_date}</Table.Cell>
-							<Table.Cell class="text-right">{idr(b.amount)}</Table.Cell>
-							<Table.Cell class="text-right">{idr(paidOf(b))}</Table.Cell>
-							<Table.Cell class="text-right">{idr(balanceOf(b))}</Table.Cell>
-							<Table.Cell>
-								<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
-							</Table.Cell>
-						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet — generate this month</Table.Cell>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
-		</Card.Content>
-	</Card.Root>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet — generate this month</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</div>
 </div>
