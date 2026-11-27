@@ -7,29 +7,65 @@ concurrency:
   group: e2e-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
-      PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
-      PUBLIC_SUPABASE_ANON_KEY: ${{ vars.PUBLIC_SUPABASE_ANON_KEY }}
-      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
-      E2E_PASS: ${{ secrets.E2E_PASS }}
+      # App + tests talk to the local Supabase stack started below (no hosted secrets).
+      E2E_EMAIL: ci-e2e@example.com
+      E2E_PASS: ci-e2e-password
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+
       - run: npm ci
-      - name: Install Playwright chromium
+
+      - name: Install Supabase CLI (pinned)
+        run: npm install --no-save supabase@2.20.9
+
+      - name: Start local Supabase (Docker)
+        run: npx supabase start
+
+      - name: Capture local Supabase endpoints
+        id: sb
+        run: |
+          set -euo pipefail
+          npx supabase status -o env | awk -F= '
+            /^SUPABASE_URL=/{ print "url=" $2 }
+            /^SUPABASE_ANON_KEY=/{ print "anon=" $2 }
+            /^SUPABASE_SERVICE_ROLE_KEY=/{ print "service=" $2 }
+          ' > /tmp/sb.env
+          test -s /tmp/sb.env || { echo "supabase status produced no env"; cat /tmp/sb.env; exit 1; }
+          cat /tmp/sb.env >> "$GITHUB_OUTPUT"
+
+      - name: Provision CI user + owner tenant
+        run: node scripts/ci-supabase-setup.mjs
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.sb.outputs.service }}
+
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-      - name: Run e2e tests
-        run: npx playwright test
-      - name: Upload test results on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: test-results/
-          retention-days: 7
+
+      - name: Unit + DB flow tests (local Supabase)
+        run: npm run test
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          CI: "true"
+
+      - name: E2E tests (local Supabase)
+        run: npm run test:e2e
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          CI: "true"
