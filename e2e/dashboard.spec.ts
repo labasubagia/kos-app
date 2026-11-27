@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, hasCreds, login, uniqueName } from "./harness";
+import { cleanupArtifacts, client, ensureCreds, login, uniqueName } from "./harness";
 import {
 	checkInContract,
 	createBuilding,
@@ -9,7 +9,7 @@ import {
 	generateBills,
 } from "./helpers";
 
-test.skip(!hasCreds(), "E2E credentials not set");
+ensureCreds();
 
 test("dashboard lists arrears with outstanding balance and empty rooms", async ({ page }) => {
 	test.setTimeout(120_000);

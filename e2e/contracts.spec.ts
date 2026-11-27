@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { cleanupArtifacts, client, fillByLabel, hasCreds, login, selectOption, uniqueName } from "./harness";
+import { cleanupArtifacts, client, ensureCreds, fillByLabel, login, selectOption, uniqueName } from "./harness";
 import { createBuilding, createLocation, createRenter, createRoom, pickDate } from "./helpers";
 
-test.skip(!hasCreds(), "E2E credentials not set");
+ensureCreds();
 
 const setup = async (page: import("@playwright/test").Page) => {
 	const location = uniqueName("Loc");

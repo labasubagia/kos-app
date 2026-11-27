@@ -5,7 +5,7 @@
 	import { Plus, Pencil, Trash2, Download } from "@lucide/svelte";
 	import { downloadCsv, toCsv, todayStamp } from "$lib/csv";
 	import { tenant } from "$lib/stores/auth.svelte";
-	import { supabase } from "$lib/supabase";
+	import { createRenter, listRentersDetailed, removeRenter, updateRenter } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Input from "$lib/components/ui/input";
@@ -41,10 +41,7 @@
 	let confirmingDelete = $state(false);
 
 	async function load() {
-		const { data, error } = await supabase
-			.from("renters")
-			.select("id, name, phone, email, nik, notes")
-			.order("name");
+		const { data, error } = await listRentersDetailed();
 		loading = false;
 		if (error) {
 			toast.error(error.message);
@@ -106,10 +103,9 @@
 			notes: notes.trim() || null,
 		};
 		saving = true;
-		const query = editingId
-			? supabase.from("renters").update(payload).eq("id", editingId)
-			: supabase.from("renters").insert(payload);
-		const { error } = await query.select().single();
+		const { error } = editingId
+			? await updateRenter(editingId, payload)
+			: await createRenter(payload);
 		if (error) {
 			formError = error.message;
 			return;
@@ -122,7 +118,7 @@
 	async function confirmDelete() {
 		if (!deleting) return;
 		confirmingDelete = true;
-		const { error } = await supabase.from("renters").delete().eq("id", deleting.id);
+		const { error } = await removeRenter(deleting.id);
 		confirmingDelete = false;
 		if (error) {
 			deleting = null;

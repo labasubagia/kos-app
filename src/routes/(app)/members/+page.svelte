@@ -3,7 +3,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { tenant, user } from "$lib/stores/auth.svelte";
-	import { supabase } from "$lib/supabase";
+	import { inviteMember, listMembers, removeMember } from "$lib/db";
 	import * as Card from "$lib/components/ui/card";
 	import * as Input from "$lib/components/ui/input";
 	import * as Label from "$lib/components/ui/label";
@@ -23,7 +23,7 @@
 	let removingId = $state<string | null>(null);
 
 	async function loadMembers() {
-		const { data, error } = await supabase.rpc("tenant_members", { p_tenant: $tenant?.tenantId });
+		const { data, error } = await listMembers($tenant?.tenantId ?? "");
 		if (error) {
 			toast.error(error.message);
 			members = [];
@@ -46,7 +46,7 @@
 			return;
 		}
 		inviting = true;
-		const { error } = await supabase.rpc("invite_member", { p_email: email });
+		const { error } = await inviteMember(email);
 		inviting = false;
 		if (error) {
 			toast.error(error.message);
@@ -59,11 +59,7 @@
 
 	async function remove(m: Member) {
 		removingId = m.user_id;
-		const { error } = await supabase
-			.from("memberships")
-			.delete()
-			.eq("user_id", m.user_id)
-			.eq("tenant_id", $tenant?.tenantId);
+		const { error } = await removeMember(m.user_id, $tenant?.tenantId ?? "");
 		removingId = null;
 		if (error) {
 			toast.error(error.message);

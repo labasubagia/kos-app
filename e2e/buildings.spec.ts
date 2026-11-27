@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { createBuilding, createLocation } from "./helpers";
-import { hasCreds, login, uniqueName } from "./harness";
+import { ensureCreds, login, uniqueName } from "./harness";
 
-test.skip(!hasCreds(), "E2E credentials not set");
+ensureCreds();
 
 test("building CRUD round-trip under a fresh location", async ({ page }) => {
 	await login(page);

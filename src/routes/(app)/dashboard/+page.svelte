@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { listActiveContracts, listRooms, listUnpaidBills, sumExpensesBetween, sumPaymentsBetween } from "$lib/db";
 	import * as Card from "$lib/components/ui/card";
 	import { Badge } from "$lib/components/ui/badge";
 	import { Skeleton } from "$lib/components/ui/skeleton";
 	import { BedDouble, Wallet, AlertTriangle, CalendarClock, CircleDollarSign } from "@lucide/svelte";
+	import { balanceOf, formatIDR, totalPaid } from "$lib/logic/bills";
 
 	type Room = {
 		id: string;
@@ -36,8 +37,7 @@
 	let bills = $state<Bill[]>([]);
 	let contracts = $state<Contract[]>([]);
 
-	const idr = (n: number) =>
-		n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+	const idr = formatIDR;
 
 	const now = new Date();
 	const monthLabel = now.toLocaleString("id-ID", { month: "long", year: "numeric" });
@@ -48,25 +48,11 @@
 
 	onMount(async () => {
 	const [r, p, b, c, e] = await Promise.all([
-			supabase.from("rooms").select("id, name, status, buildings(name, locations(name))"),
-			supabase
-				.from("payments")
-				.select("amount")
-				.gte("date", monthStart)
-				.lte("date", monthEnd),
-			supabase
-				.from("bills")
-				.select("id, period, amount, status, payments(amount), contracts!inner(rooms(name), renters(name))")
-				.neq("status", "paid"),
-		supabase
-			.from("contracts")
-			.select("id, end_date, rooms(name), renters(name)")
-			.eq("active", true),
-		supabase
-			.from("expenses")
-			.select("amount")
-			.gte("date", monthStart)
-			.lte("date", monthEnd),
+		listRooms(),
+		sumPaymentsBetween(monthStart, monthEnd),
+		listUnpaidBills(),
+		listActiveContracts(),
+		sumExpensesBetween(monthStart, monthEnd),
 	]);
 		rooms = (r.data ?? []) as unknown as Room[];
 		monthIncome = (p.data ?? []).reduce((sum: number, row: { amount: number }) => sum + Number(row.amount), 0);
@@ -112,8 +98,8 @@
 	const arrearsRows = $derived(
 		bills
 			.map((b) => {
-				const paid = (b.payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
-				const outstanding = Number(b.amount) - paid;
+				const paid = totalPaid(b.payments);
+				const outstanding = balanceOf(Number(b.amount), b.payments);
 				return {
 					renter: b.contracts.renters.name,
 					room: b.contracts.rooms.name,

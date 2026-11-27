@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { createExpense, listBuildingOptions, listExpenses, listLocationOptions, removeExpense, updateExpense } from "$lib/db";
 	import { toast } from "svelte-sonner";
 	import { tenant } from "$lib/stores/auth.svelte.ts";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -25,6 +25,7 @@
 	import DatePicker from "$lib/components/date-picker.svelte";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Pencil, Trash2, Plus } from "@lucide/svelte";
+	import { formatIDR } from "$lib/logic/bills";
 
 	type Expense = {
 		id: string;
@@ -70,10 +71,7 @@
 	let deletingId = $state<string | null>(null);
 
 	async function load() {
-		const { data, error } = await supabase
-			.from("expenses")
-			.select("id, category, amount, date, notes, location_id, building_id, locations(id, name), buildings(id, name, locations(name))")
-			.order("date", { ascending: false });
+		const { data, error } = await listExpenses();
 		if (error) {
 			toast.error("Failed to load expenses", { description: error.message });
 			return;
@@ -83,8 +81,8 @@
 
 	async function loadLinks() {
 		const [loc, bld] = await Promise.all([
-			supabase.from("locations").select("id, name").order("name"),
-			supabase.from("buildings").select("id, name, locations!inner(name)").order("name")
+		listLocationOptions(),
+		listBuildingOptions(),
 		]);
 	if (!loc.error && loc.data) locations = loc.data as unknown as Location[];
 		if (!bld.error && bld.data) buildings = bld.data as unknown as Building[];
@@ -133,8 +131,8 @@
 			notes: form.notes.trim() || null
 		};
 		const { error } = form.id
-			? await supabase.from("expenses").update(payload).eq("id", form.id)
-			: await supabase.from("expenses").insert(payload);
+			? await updateExpense(form.id, payload)
+			: await createExpense(payload);
 		submitting = false;
 		if (error) {
 			formError = error.message;
@@ -150,7 +148,7 @@
 
 	async function deleteExpense(e: Expense) {
 		deletingId = e.id;
-		const { error } = await supabase.from("expenses").delete().eq("id", e.id);
+		const { error } = await removeExpense(e.id);
 		deletingId = null;
 		if (error) {
 			toast.error("Failed to delete expense", { description: error.message });
@@ -161,7 +159,7 @@
 	}
 
 	const categoryLabel = (c: Expense["category"]) => CATEGORIES.find((x) => x.value === c)?.label ?? "";
-	const idr = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+	const idr = formatIDR;
 </script>
 
 <svelte:head><title>Expenses</title></svelte:head>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { supabase } from "$lib/supabase";
+	import { deleteBill, generateBills, listActiveContractOptions, listBillsForMonth } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
 	import * as Popover from "$lib/components/ui/popover";
 	import * as Select from "$lib/components/ui/select";
@@ -28,6 +28,14 @@
 		};
 	};
 
+	type ContractOption = {
+		id: string;
+		start_date: string;
+		end_date: string | null;
+		renters: { name: string }[];
+		rooms: { name: string }[];
+	};
+
 	const statusVariant = { unpaid: "destructive", partial: "secondary", paid: "default" } as const;
 
 	let bills = $state<Bill[]>([]);
@@ -52,18 +60,12 @@
 	async function load() {
 		loading = true;
 		const [{ data }, { data: cs }] = await Promise.all([
-			supabase
-				.from("bills")
-				.select("*, payments(amount), contracts!inner(rooms(name), renters(name))")
-				.eq("period", selectedMonth)
-				.order("due_date", { ascending: true }),
-			supabase.from("contracts").select("id, renters(name), rooms(name)").eq("active", true),
+			listBillsForMonth(selectedMonth),
+			listActiveContractOptions(),
 		]);
 		bills = (data ?? []) as Bill[];
-		genContracts = (((cs ?? []) as unknown) as { id: string; renters: { name: string }; rooms: { name: string } }[]).map((c) => ({
-			id: c.id,
-			label: `${c.renters.name} — ${c.rooms.name}`,
-		}));
+		const opts = (cs ?? []) as ContractOption[];
+		genContracts = opts.map((c) => ({ id: c.id, label: `${c.renters[0]?.name ?? ""} — ${c.rooms[0]?.name ?? ""}` }));
 		loading = false;
 	}
 
@@ -72,15 +74,15 @@
 	const sortedBills = $derived(sortBills(bills));
 
 	async function generate(period: string) {
-		const { data: cs } = await supabase.from("contracts").select("id, start_date, end_date").eq("active", true);
-		const candidates = (genContract ? ((cs ?? []) as { id: string; start_date: string; end_date: string | null }[]).filter((c) => c.id === genContract) : (cs ?? [])) as { start_date: string; end_date: string | null }[];
-		const covered = candidates.some((c) => isWithinStayWindow(period, c.start_date, c.end_date));
-		if (!covered) {
+		const { data: cs } = await listActiveContractOptions();
+		const all = (cs ?? []) as ContractOption[];
+		const candidates = genContract ? all.filter((c) => c.id === genContract) : all;
+		if (!candidates.some((c) => isWithinStayWindow(period, c.start_date, c.end_date))) {
 			toast.error(genContract ? `Selected contract does not cover ${period}` : `No active contract covers ${period}`);
 			return;
 		}
 		generating = true;
-		const { data, error } = await supabase.rpc("generate_bills", { p_period: period, p_contract_id: genContract || null });
+		const { data, error } = await generateBills({ p_period: period, p_contract_id: genContract || null });
 		generating = false;
 		if (error) {
 			toast.error(error.message);
@@ -97,7 +99,7 @@
 	async function removeBill() {
 		if (!constBill) return;
 		deleting = true;
-		const { error } = await supabase.from("bills").delete().eq("id", constBill.id);
+		const { error } = await deleteBill(constBill.id);
 		deleting = false;
 		if (error) {
 			toast.error(error.message);
@@ -172,14 +174,14 @@
 						<Table.Cell class="text-right">{formatIDR(b.amount)}</Table.Cell>
 						<Table.Cell class="text-right">{formatIDR(totalPaid(b.payments))}</Table.Cell>
 						<Table.Cell class="text-right">{formatIDR(balanceOf(b.amount, b.payments))}</Table.Cell>
-							<Table.Cell>
-								<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
-							</Table.Cell>
-							<Table.Cell class="text-right">
-								<Button size="sm" variant="ghost" aria-label={`Delete bill ${b.period}`} onclick={() => (constBill = b)}>
-									<Trash2 class="h-4 w-4" />
-								</Button>
-							</Table.Cell>
+						<Table.Cell>
+							<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
+						</Table.Cell>
+						<Table.Cell class="text-right">
+							<Button size="sm" variant="ghost" aria-label={`Delete bill ${b.period}`} onclick={() => (constBill = b)}>
+								<Trash2 class="h-4 w-4" />
+							</Button>
+						</Table.Cell>
 					</Table.Row>
 				{:else}
 					<Table.Row>
@@ -188,17 +190,17 @@
 				{/each}
 			</Table.Body>
 		</Table.Root>
-	<Dialog.Root open={constBill !== null} onOpenChange={(o) => { if (!o) constBill = null; }}>
-		<Dialog.Content class="sm:max-w-sm">
-			<Dialog.Header>
-				<Dialog.Title>Delete bill?</Dialog.Title>
-				<Dialog.Description>Delete bill for {constBill?.period}? Its payments will also be removed.</Dialog.Description>
-			</Dialog.Header>
-			<Dialog.Footer>
-				<Button variant="outline" onclick={() => (constBill = null)}>Cancel</Button>
-				<Button onclick={removeBill} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button>
-			</Dialog.Footer>
-		</Dialog.Content>
-	</Dialog.Root>
-	</div>
+		<Dialog.Root open={constBill !== null} onOpenChange={(o) => { if (!o) constBill = null; }}>
+			<Dialog.Content class="sm:max-w-sm">
+				<Dialog.Header>
+					<Dialog.Title>Delete bill?</Dialog.Title>
+					<Dialog.Description>Delete bill for {constBill?.period}? Its payments will also be removed.</Dialog.Description>
+				</Dialog.Header>
+				<Dialog.Footer>
+					<Button variant="outline" onclick={() => (constBill = null)}>Cancel</Button>
+					<Button onclick={removeBill} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button>
+				</Dialog.Footer>
+			</Dialog.Content>
+		</Dialog.Root>
+		</div>
 </div>

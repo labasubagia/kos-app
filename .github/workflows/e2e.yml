@@ -2,36 +2,86 @@ name: E2E
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 concurrency:
   group: e2e-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
-      PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
-      PUBLIC_SUPABASE_ANON_KEY: ${{ vars.PUBLIC_SUPABASE_ANON_KEY }}
-      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
-      E2E_PASS: ${{ secrets.E2E_PASS }}
+      # App + tests talk to the local Supabase stack started below (no hosted secrets).
+      E2E_EMAIL: ci-e2e@example.com
+      E2E_PASS: ci-e2e-password
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+
       - run: npm ci
-      - name: Install Playwright chromium
-        run: npx playwright install --with-deps chromium
-      - name: Run e2e tests
-        run: npx playwright test
-      - name: Upload test results on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
+
+      - uses: supabase/setup-cli@v3
         with:
-          name: test-results
-          path: test-results/
-          retention-days: 7
+          version: "^2.20.9"
+
+
+      - name: Start local Supabase (Docker)
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 5); do
+            echo "== supabase start attempt $i =="
+            if supabase start; then
+              echo "supabase stack ready"
+              exit 0
+            fi
+            echo "attempt $i failed; retrying in 25s"
+            sleep 25
+          done
+          echo "supabase start failed after 5 attempts" >&2
+          exit 1
+
+
+      - name: Capture local Supabase endpoints
+        id: sb
+        run: |
+          set -euo pipefail
+          node scripts/ci-supabase-env.mjs > /tmp/sb.env
+          cat /tmp/sb.env >> "$GITHUB_OUTPUT"
+      - name: Provision CI user + owner tenant
+        run: node scripts/ci-supabase-setup.mjs
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.sb.outputs.service }}
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-browsers-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Unit + DB flow tests (local Supabase)
+        run: npm run test
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          CI: "true"
+
+      - name: E2E tests (local Supabase)
+        run: npm run test:e2e
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          CI: "true"
