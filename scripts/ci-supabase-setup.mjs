@@ -33,7 +33,7 @@ if (uErr) {
 	if (!found) throw new Error(`createUser: ${uErr.message}`);
 	userId = found.id;
 } else {
-	userId = created.id;
+	userId = created.user.id;
 }
 
 // 2. Membership already exists? Nothing to do.
