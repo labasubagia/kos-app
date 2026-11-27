@@ -13,7 +13,7 @@ import {
 
 test.skip(!hasCreds(), "E2E credentials not set");
 
-test("user pays partially, then overpayment is rejected; completes to paid", async ({ page }) => {
+test("partial pay → overpayment rejected (stays partial) → completes with exact remainder", async ({ page }) => {
 	test.setTimeout(120_000);
 	const location = uniqueName("Loc");
 	const building = uniqueName("Bld");
@@ -29,16 +29,20 @@ test("user pays partially, then overpayment is rejected; completes to paid", asy
 	await checkInContract(page, { renter, room, rent });
 	await generateBills(page);
 
-	// partial installment → status `partial`
+	// positive: partial installment → status `partial`
 	await recordPayment(page, `${renter} — ${room}`, "400000");
 	await expect(page.getByText("Payment recorded")).toBeVisible();
 	await expectBillStatus(page, renter, "partial");
 
-	// attempting to exceed the remaining balance (400k + 600k > 850k) → rejected
+	// negative: trying to exceed the remaining balance (400k + 600k > 850k) is
+	// rejected atomically — status stays `partial`
 	await recordPayment(page, `${renter} — ${room}`, "600000");
 	await expect(page.getByText(/overpayment/)).toBeVisible();
+	await expectBillStatus(page, renter, "partial");
 
-	// sum of installments never exceeded the bill: ends paid at exactly 850k
+	// positive: finish with the exact remainder
+	await recordPayment(page, `${renter} — ${room}`, "450000");
+	await expect(page.getByText("Payment recorded")).toBeVisible();
 	await expectBillStatus(page, renter, "paid");
 
 	await cleanupArtifacts(await client(), renter, room);
