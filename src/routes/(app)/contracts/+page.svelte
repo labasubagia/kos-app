@@ -9,6 +9,7 @@
 	import * as Select from "$lib/components/ui/select";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
+	import DatePicker from "$lib/components/date-picker.svelte";
 	import { toast } from "svelte-sonner";
 	import { depositRefund, isValidContractDates } from "$lib/logic/contracts";
 
@@ -269,11 +270,11 @@
 				<div class="grid grid-cols-2 gap-4">
 					<div class="grid gap-2">
 						<Label.Root>Start date</Label.Root>
-						<Input.Root type="date" bind:value={ciStart} />
+					<DatePicker bind:value={ciStart} placeholder="Select start date" />
 					</div>
 					<div class="grid gap-2">
 						<Label.Root>End date (optional)</Label.Root>
-						<Input.Root type="date" bind:value={ciEnd} />
+					<DatePicker bind:value={ciEnd} placeholder="Select end date" />
 					</div>
 				</div>
 				<div class="grid grid-cols-2 gap-4">
@@ -317,7 +318,7 @@
 			</Dialog.Header>
 			<div class="grid gap-2 py-4">
 				<Label.Root>New end date</Label.Root>
-				<Input.Root type="date" bind:value={extEnd} />
+			<DatePicker bind:value={extEnd} placeholder="Select new end date" />
 			</div>
 			<Dialog.Footer>
 				<Button variant="outline" onclick={() => { openExtend = false; extendTarget = null; }}>Cancel</Button>
