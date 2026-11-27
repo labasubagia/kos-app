@@ -18,7 +18,6 @@ export async function pickDate(page: Page, trigger: Locator, date: Date) {
 	await page.keyboard.press("Escape");
 	await expect(cal).toBeHidden();
 }
-
 export async function createLocation(page: Page, name: string) {
 	await page.goto("/locations");
 	await page.getByRole("button", { name: "Add location" }).click();
@@ -103,6 +102,22 @@ export async function recordPayment(page: Page, contractLabel: string, amount: s
 	await dialog(page).getByRole("button", { name: "Record payment" }).click();
 }
 
+/** Open the bills month/year picker and select the given year+month. */
+export async function pickPeriod(page: Page, y: number, m: number) {
+	const month = String(m).padStart(2, "0");
+	const period = `${y}-${month}`;
+	await page.getByRole("button", { name: /^\d{4}-\d{2}$/ }).first().click();
+	const content = page.locator("[data-slot=popover-content]");
+	await expect(content).toBeVisible();
+	for (let i = 0; i < 15; i++) {
+		const shown = Number(await content.locator("span.text-sm.font-medium").textContent());
+		if (shown === y) break;
+		await content.getByRole("button", { name: shown < y ? "Next year" : "Previous year" }).click();
+	}
+	await content.getByRole("button", { name: month }).click();
+	await expect(page.getByRole("button", { name: period, exact: true })).toBeVisible();
+}
+
 export async function expectBillStatus(page: Page, renter: string, status: string) {
 	await page.goto("/bills");
 	const row = page.locator("tbody tr", { hasText: renter });
@@ -112,7 +127,7 @@ export async function expectBillStatus(page: Page, renter: string, status: strin
 /** Create location→building→room→renter→active contract directly via API. */
 export async function seedFixtures(
 	c: SupabaseClient,
-	opts: { location: string; building: string; room: string; renter: string; rent: string },
+	opts: { location: string; building: string; room: string; renter: string; rent: string; startDate?: string },
 ): Promise<{ renterId: string; roomId: string; contractId: string }> {
 	const { data: member, error: me } = await c.from("memberships").select("tenant_id").limit(1).single();
 	if (me || !member) throw new Error(`seed: cannot resolve tenant: ${me?.message ?? "no membership"}`);
@@ -130,7 +145,7 @@ export async function seedFixtures(
 		tenant_id: tid,
 		renter_id: rnt.id,
 		room_id: rm.id,
-			start_date: new Date().toISOString().slice(0, 10),
+			start_date: opts.startDate ?? new Date().toISOString().slice(0, 10),
 		monthly_rent: Number(opts.rent),
 	}).select().single();
 	if (ce) throw new Error(`seed: contract: ${ce.message}`);
