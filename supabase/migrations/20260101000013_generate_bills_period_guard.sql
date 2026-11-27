@@ -3,6 +3,7 @@
 -- (e.g. a tenant who left last year should not get a bill for their month).
 -- Behavior otherwise identical: idempotent via unique (contract_id, period).
 
+drop function if exists public.generate_bills(text);
 create or replace function public.generate_bills(p_period text default to_char(now(), 'YYYY-MM'), p_contract_id uuid default null)
 returns int
 language plpgsql security definer
