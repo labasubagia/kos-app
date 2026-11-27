@@ -9,7 +9,7 @@
 	import * as Dialog from "$lib/components/ui/dialog";
 	import { Trash2 } from "@lucide/svelte";
 	import { toast } from "svelte-sonner";
-	import { balanceOf, formatIDR, sortBills, totalPaid } from "$lib/logic/bills";
+	import { balanceOf, formatIDR, isWithinStayWindow, sortBills, totalPaid } from "$lib/logic/bills";
 
 	type Bill = {
 		id: string;
@@ -61,10 +61,10 @@
 	const sortedBills = $derived(sortBills(bills));
 
 	async function generate(period: string) {
-		const { data: cs } = await supabase.from("contracts").select("start_date").eq("active", true);
-		const starts = (cs ?? []).map((c) => c.start_date.slice(0, 7)).toSorted();
-		if (starts.length && period < starts[0]) {
-			toast.error(`Cannot generate — earliest check-in is ${starts[0]}`);
+		const { data: cs } = await supabase.from("contracts").select("start_date, end_date").eq("active", true);
+		const covered = (cs ?? []).some((c) => isWithinStayWindow(period, c.start_date, c.end_date));
+		if (!covered) {
+			toast.error(`No active contract covers ${period}`);
 			return;
 		}
 		generating = true;

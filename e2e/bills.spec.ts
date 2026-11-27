@@ -68,49 +68,24 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 	await cleanupArtifacts(c, renterA, roomA);
 	await cleanupArtifacts(c, renterB, roomB);
 });
-test("generating a month bills only contracts checked in by that month", async () => {
+test("generate is blocked before any contract's check-in month", async ({ page }) => {
 	test.setTimeout(120_000);
 	const c = await client();
 	const now = new Date();
-	const novStart = `${ym(now)}-01`;
-	const decStart = `${ym(new Date(now.getFullYear(), now.getMonth() + 1, 1))}-01`;
-
-	const novRenters: string[] = [];
-	const novRooms: string[] = [];
-	const ids: string[] = [];
-	for (let i = 0; i < 3; i++) {
-		const renter = uniqueName(`RntN${i}`);
-		const room = uniqueName(`RmN${i}`);
-		const f = await seedFixtures(c, {
-			location: uniqueName(`LocN${i}`),
-			building: uniqueName(`BldN${i}`),
-			room,
-			renter,
-			rent: "800000",
-			startDate: novStart,
-		});
-		ids.push(f.contractId);
-		novRenters.push(renter);
-		novRooms.push(room);
-	}
-	const decRenter = uniqueName("RntD");
-	const decRoom = uniqueName("RmD");
-	const dec = await seedFixtures(c, {
-		location: uniqueName("LocD"),
-		building: uniqueName("BldD"),
-		room: decRoom,
-		renter: decRenter,
+	const nextMonth = `${ym(new Date(now.getFullYear(), now.getMonth() + 1, 1))}-01`;
+	const renter = uniqueName("RntG");
+	const room = uniqueName("RmG");
+	await seedFixtures(c, {
+		location: uniqueName("LocG"),
+		building: uniqueName("BldG"),
+		room,
+		renter,
 		rent: "800000",
-		startDate: decStart,
+		startDate: nextMonth,
 	});
-	ids.push(dec.contractId);
-
-	await generateBillsApi(c);
-
-	const { data: bills } = await c.from("bills").select("contract_id").in("contract_id", ids);
-	expect(bills?.length).toBe(3);
-	expect(bills?.every((b) => b.contract_id !== dec.contractId)).toBe(true);
-
-	for (let i = 0; i < 3; i++) await cleanupArtifacts(c, novRenters[i], novRooms[i]);
-	await cleanupArtifacts(c, decRenter, decRoom);
+	await login(page);
+	await page.goto("/bills");
+	await page.getByRole("button", { name: /Generate/ }).click();
+	await expect(page.getByText("No active contract covers")).toBeVisible();
+	await cleanupArtifacts(c, renter, room);
 });
