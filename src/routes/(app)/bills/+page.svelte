@@ -5,7 +5,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
 	import { toast } from "svelte-sonner";
-	import { balanceOf, formatIDR, totalPaid } from "$lib/logic/bills";
+	import { balanceOf, formatIDR, sortBills, totalPaid } from "$lib/logic/bills";
 
 	type Bill = {
 		id: string;
@@ -28,18 +28,23 @@
 	let bills = $state<Bill[]>([]);
 	let loading = $state(true);
 	let generating = $state(false);
+	const now = new Date();
+	let selectedMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+
 	async function load() {
 		loading = true;
 		const { data } = await supabase
 			.from("bills")
 			.select("*, payments(amount), contracts!inner(rooms(name), renters(name))")
-			.order("period", { ascending: false })
+			.eq("period", selectedMonth)
 			.order("due_date", { ascending: true });
 		bills = (data ?? []) as Bill[];
 		loading = false;
 	}
 
 	onMount(load);
+
+	const sortedBills = $derived(sortBills(bills));
 
 	async function generate() {
 		generating = true;
@@ -60,7 +65,13 @@
 			<h1 class="text-2xl font-bold">Bills</h1>
 			<p class="text-sm text-muted-foreground">Monthly bills per contract</p>
 		</div>
-		<Button onclick={generate} disabled={generating}>{generating ? "Generating…" : "Generate this month"}</Button>
+		<div class="flex items-center gap-3">
+			<label class="flex items-center gap-2 text-sm text-muted-foreground">
+				Period
+				<input type="month" bind:value={selectedMonth} onchange={load} class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground shadow-xs outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
+			</label>
+			<Button onclick={generate} disabled={generating}>{generating ? "Generating…" : "Generate this month"}</Button>
+		</div>
 	</div>
 
 	<div class="rounded-lg border">
@@ -78,7 +89,7 @@
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each bills as b (b.id)}
+				{#each sortedBills as b (b.id)}
 					<Table.Row>
 						<Table.Cell class="font-mono">{b.period}</Table.Cell>
 						<Table.Cell>{b.contracts.renters.name}</Table.Cell>
@@ -93,7 +104,7 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet — generate this month</Table.Cell>
+						<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>

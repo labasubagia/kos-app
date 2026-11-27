@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { billAmount, isPastGrace, periodKey, nextPeriod, totalPaid, balanceOf, formatIDR } from "../bills";
+import { billAmount, isPastGrace, periodKey, nextPeriod, totalPaid, balanceOf, formatIDR, sortBills } from "../bills";
 
 describe("billAmount", () => {
 	it("rent only when previous period paid or within grace", () => {
@@ -40,5 +40,20 @@ describe("payment sums", () => {
 	});
 	it("formatIDR renders IDR without decimals", () => {
 		expect(formatIDR(550000)).toContain("550.000");
+	});
+});
+
+describe("sortBills", () => {
+	it("sorts unpaid above paid/partial, then by due_date", () => {
+		const paid = { id: "paid", status: "paid" as const, due_date: "2026-01-10" };
+		const unpaidLate = { id: "unpaid-late", status: "unpaid" as const, due_date: "2026-01-20" };
+		const unpaidEarly = { id: "unpaid-early", status: "unpaid" as const, due_date: "2026-01-05" };
+		const partial = { id: "partial", status: "partial" as const, due_date: "2026-01-01" };
+		expect(sortBills([paid, partial, unpaidLate, unpaidEarly]).map((b) => b.id)).toEqual([
+			"unpaid-early",
+			"unpaid-late",
+			"partial",
+			"paid",
+		]);
 	});
 });
