@@ -61,6 +61,13 @@ jobs:
           PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.sb.outputs.service }}
 
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-browsers-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
