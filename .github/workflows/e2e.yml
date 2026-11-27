@@ -40,6 +40,12 @@ jobs:
           set -euo pipefail
           node scripts/ci-supabase-env.mjs > /tmp/sb.env
           cat /tmp/sb.env >> "$GITHUB_OUTPUT"
+      - name: Provision CI user + owner tenant
+        run: node scripts/ci-supabase-setup.mjs
+        env:
+          PUBLIC_SUPABASE_URL: ${{ steps.sb.outputs.url }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ steps.sb.outputs.anon }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.sb.outputs.service }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
