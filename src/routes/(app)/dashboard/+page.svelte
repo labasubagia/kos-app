@@ -9,6 +9,7 @@
 	type Room = {
 		id: string;
 		status: "available" | "reserved" | "occupied" | "maintenance";
+		name: string;
 		buildings: { name: string; locations: { name: string } | null } | null;
 	};
 
@@ -18,6 +19,7 @@
 		amount: number;
 		status: "unpaid" | "partial" | "paid";
 		contracts: { rooms: { name: string }; renters: { name: string } };
+		payments: { amount: number }[] | null;
 	};
 
 	type Contract = {
@@ -45,7 +47,7 @@
 
 	onMount(async () => {
 		const [r, p, b, c] = await Promise.all([
-			supabase.from("rooms").select("id, status, buildings(name, locations(name))"),
+			supabase.from("rooms").select("id, name, status, buildings(name, locations(name))"),
 			supabase
 				.from("payments")
 				.select("amount")
@@ -53,7 +55,7 @@
 				.lte("date", monthEnd),
 			supabase
 				.from("bills")
-				.select("id, period, amount, status, contracts!inner(rooms(name), renters(name))")
+				.select("id, period, amount, status, payments(amount), contracts!inner(rooms(name), renters(name))")
 				.neq("status", "paid"),
 			supabase
 				.from("contracts")
@@ -97,7 +99,29 @@
 		return [...map.entries()].toSorted((a, b) => a[0].localeCompare(b[0]));
 	})());
 
-	const totalOutstanding = $derived(bills.reduce((sum, b) => sum + Number(b.amount), 0));
+	const emptyRooms = $derived(rooms.filter((r) => r.status === "available"));
+
+	type ArrearsRow = { renter: string; room: string; period: string; outstanding: number; pct: number };
+	const arrearsRows = $derived(
+		bills
+			.map((b) => {
+				const paid = (b.payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
+				const outstanding = Number(b.amount) - paid;
+				return {
+					renter: b.contracts.renters.name,
+					room: b.contracts.rooms.name,
+					period: b.period,
+					outstanding,
+					pct: Number(b.amount) > 0 ? Math.round((paid / Number(b.amount)) * 100) : 0,
+				};
+			})
+			.toSorted((a, b) => {
+				if (b.outstanding !== a.outstanding) return b.outstanding - a.outstanding;
+				return a.pct - b.pct;
+			})
+	);
+
+	const totalOutstanding = $derived(arrearsRows.reduce((sum, r) => sum + r.outstanding, 0));
 
 	function expiringFlag(end: string | null): 30 | 60 | "indefinite" | null {
 		if (!end) return "indefinite";
@@ -178,6 +202,18 @@
 							{/if}
 						</div>
 					</div>
+					<div class="mt-4">
+						<p class="text-xs font-medium text-muted-foreground">Empty rooms</p>
+						{#if emptyRooms.length === 0}
+							<p class="mt-1 text-xs text-muted-foreground">All rooms occupied</p>
+						{:else}
+							<ul class="mt-1 space-y-1 text-sm">
+								{#each emptyRooms as r (r.id)}
+									<li>{r.buildings?.name} · {r.name}</li>
+								{/each}
+							</ul>
+						{/if}
+					</div>
 				{/if}
 			</Card.Content>
 		</Card.Root>
@@ -216,13 +252,13 @@
 						<span class="text-sm text-muted-foreground">outstanding ({bills.length} {bills.length === 1 ? "bill" : "bills"})</span>
 					</div>
 					<ul class="mt-4 space-y-2 text-sm">
-						{#each bills as b (b.id)}
+						{#each arrearsRows as r (r.renter + r.period)}
 							<li class="flex items-center justify-between gap-2">
 								<div class="min-w-0">
-									<p class="truncate font-medium">{b.contracts.renters.name}</p>
-									<p class="truncate text-xs text-muted-foreground">{b.contracts.rooms.name} · {b.period}</p>
+									<p class="truncate font-medium">{r.renter}</p>
+									<p class="truncate text-xs text-muted-foreground">{r.room} · {r.period}</p>
 								</div>
-								<span class="shrink-0 font-medium">{idr(Number(b.amount))}</span>
+								<span class="shrink-0 font-medium">{idr(r.outstanding)}</span>
 							</li>
 						{/each}
 					</ul>
