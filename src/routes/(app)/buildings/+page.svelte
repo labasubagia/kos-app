@@ -152,12 +152,18 @@
 </script>
 
 <svelte:head><title>Buildings</title></svelte:head>
-<Card>
-	<CardHeader class="flex-row items-center justify-between space-y-0">
-		<CardTitle>Buildings</CardTitle>
-		<Button onclick={openCreate}><Plus /> Add building</Button>
-	</CardHeader>
-	<CardContent>
+<div class="space-y-6">
+	<div class="flex items-center justify-between">
+		<div>
+			<h1 class="text-2xl font-bold">Buildings</h1>
+			<p class="text-sm text-muted-foreground">Manage buildings within locations</p>
+		</div>
+		<div class="flex gap-2">
+			<Button onclick={openCreate}><Plus class="h-4 w-4" /> Add building</Button>
+		</div>
+	</div>
+
+	<div class="rounded-lg border">
 		{#if loading}
 			<p class="text-sm text-muted-foreground">Loading…</p>
 		{:else if buildings.length === 0}
@@ -195,8 +201,8 @@
 				</TableBody>
 			</Table>
 		{/if}
-	</CardContent>
-</Card>
+	</div>
+</div>
 
 <Dialog bind:open={dialogOpen}>
 	<DialogContent class="sm:max-w-md">

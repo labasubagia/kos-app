@@ -160,7 +160,7 @@
 	<div class="space-y-6 print:hidden">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-semibold">Payments</h1>
+			<h1 class="text-2xl font-bold">Payments</h1>
 			<p class="text-sm text-muted-foreground">Record payments — applied FIFO to oldest bills</p>
 		</div>
 		<div class="flex gap-2">
@@ -170,44 +170,42 @@
 		</div>
 	</div>
 
-	<Card.Root>
-		<Card.Content class="p-0">
-			<Table.Root>
-				<Table.Header>
+	<div class="rounded-lg border">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Date</Table.Head>
+					<Table.Head>Renter</Table.Head>
+					<Table.Head>Room</Table.Head>
+					<Table.Head>Period</Table.Head>
+					<Table.Head>Method</Table.Head>
+					<Table.Head class="text-right">Amount</Table.Head>
+					<Table.Head class="w-16"></Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each payments as pm (pm.id)}
 					<Table.Row>
-						<Table.Head>Date</Table.Head>
-						<Table.Head>Renter</Table.Head>
-						<Table.Head>Room</Table.Head>
-						<Table.Head>Period</Table.Head>
-						<Table.Head>Method</Table.Head>
-						<Table.Head class="text-right">Amount</Table.Head>
-						<Table.Head class="w-16"></Table.Head>
+						<Table.Cell>{pm.date}</Table.Cell>
+						<Table.Cell>{pm.bills.contracts.renters.name}</Table.Cell>
+						<Table.Cell>{pm.bills.contracts.rooms.name}</Table.Cell>
+						<Table.Cell class="font-mono">{pm.bills.period}</Table.Cell>
+						<Table.Cell class="capitalize">{pm.method}</Table.Cell>
+						<Table.Cell class="text-right">{idr(pm.amount)}</Table.Cell>
+						<Table.Cell class="text-right">
+							<Button variant="ghost" size="sm" onclick={() => openReceipt(pm)} title="Receipt">
+								<Receipt class="h-4 w-4" />
+							</Button>
+						</Table.Cell>
 					</Table.Row>
-				</Table.Header>
-				<Table.Body>
-					{#each payments as pm (pm.id)}
-						<Table.Row>
-							<Table.Cell>{pm.date}</Table.Cell>
-							<Table.Cell>{pm.bills.contracts.renters.name}</Table.Cell>
-							<Table.Cell>{pm.bills.contracts.rooms.name}</Table.Cell>
-							<Table.Cell class="font-mono">{pm.bills.period}</Table.Cell>
-							<Table.Cell class="capitalize">{pm.method}</Table.Cell>
-							<Table.Cell class="text-right">{idr(pm.amount)}</Table.Cell>
-							<Table.Cell class="text-right">
-								<Button variant="ghost" size="sm" onclick={() => openReceipt(pm)} title="Receipt">
-									<Receipt class="h-4 w-4" />
-								</Button>
-							</Table.Cell>
-						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">No payments yet</Table.Cell>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
-		</Card.Content>
-	</Card.Root>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">No payments yet</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</div>
 
 	<Dialog.Root bind:open={openPay}>
 		<Dialog.Content>

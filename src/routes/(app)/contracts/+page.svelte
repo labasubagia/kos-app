@@ -177,14 +177,13 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-semibold">Contracts</h1>
+			<h1 class="text-2xl font-bold">Contracts</h1>
 			<p class="text-sm text-muted-foreground">Check-in, extend, and check-out</p>
 		</div>
 		<Button onclick={() => { resetCheckIn(); openCheckIn = true; }}>Check-in</Button>
 	</div>
 
-	<Card.Root>
-		<Card.Content class="p-0">
+<div class="rounded-lg border">
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
@@ -228,8 +227,7 @@
 					{/each}
 				</Table.Body>
 			</Table.Root>
-		</Card.Content>
-	</Card.Root>
+</div>
 
 	<!-- Check-in dialog -->
 	<Dialog.Root bind:open={openCheckIn}>
