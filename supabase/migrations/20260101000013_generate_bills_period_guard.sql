@@ -3,7 +3,7 @@
 -- (e.g. a tenant who left last year should not get a bill for their month).
 -- Behavior otherwise identical: idempotent via unique (contract_id, period).
 
-create or replace function public.generate_bills(p_period text default to_char(now(), 'YYYY-MM'))
+create or replace function public.generate_bills(p_period text default to_char(now(), 'YYYY-MM'), p_contract_id uuid default null)
 returns int
 language plpgsql security definer
 set search_path = public
@@ -28,8 +28,9 @@ begin
            c.due_day
       from public.contracts c
      where c.active
-       and p_period between to_char(c.start_date, 'YYYY-MM')
-                        and coalesce(to_char(c.end_date, 'YYYY-MM'), '9999-12')
+       and (p_contract_id is null or c.id = p_contract_id)
+        and p_period between to_char(c.start_date, 'YYYY-MM')
+                         and coalesce(to_char(c.end_date, 'YYYY-MM'), '9999-12')
   loop
     v_late := exists (
       select 1

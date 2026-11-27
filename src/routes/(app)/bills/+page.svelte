@@ -3,6 +3,7 @@
 	import { supabase } from "$lib/supabase";
 	import * as Table from "$lib/components/ui/table";
 	import * as Popover from "$lib/components/ui/popover";
+	import * as Select from "$lib/components/ui/select";
 	import { CalendarDate } from "@internationalized/date";
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
@@ -33,6 +34,8 @@
 	let loading = $state(true);
 	let generating = $state(false);
 	let constBill = $state<Bill | null>(null);
+	let genContract = $state<string>("");
+	let genContracts = $state<{ id: string; label: string }[]>([]);
 	let deleting = $state(false);
 	const now = new Date();
 	let calDate = $state(new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1));
@@ -47,12 +50,19 @@
 
 	async function load() {
 		loading = true;
-		const { data } = await supabase
-			.from("bills")
-			.select("*, payments(amount), contracts!inner(rooms(name), renters(name))")
-			.eq("period", selectedMonth)
-			.order("due_date", { ascending: true });
+		const [{ data }, { data: cs }] = await Promise.all([
+			supabase
+				.from("bills")
+				.select("*, payments(amount), contracts!inner(rooms(name), renters(name))")
+				.eq("period", selectedMonth)
+				.order("due_date", { ascending: true }),
+			supabase.from("contracts").select("id, renters(name), rooms(name)").eq("active", true),
+		]);
 		bills = (data ?? []) as Bill[];
+		genContracts = (((cs ?? []) as unknown) as { id: string; renters: { name: string }; rooms: { name: string } }[]).map((c) => ({
+			id: c.id,
+			label: `${c.renters.name} — ${c.rooms.name}`,
+		}));
 		loading = false;
 	}
 
@@ -68,7 +78,10 @@
 			return;
 		}
 		generating = true;
-		const { data, error } = await supabase.rpc("generate_bills", { p_period: period });
+		const { data, error } = await supabase.rpc("generate_bills", {
+			p_period: period,
+			p_contract_id: genContract || null,
+		});
 		generating = false;
 		if (error) {
 			toast.error(error.message);
@@ -121,7 +134,17 @@
 					</div>
 				</Popover.Content>
 			</Popover.Root>
-			<Button onclick={() => generate(selectedMonth)} disabled={generating || !selectedMonth}>{generating ? "Generating…" : `Generate ${selectedMonth}`}</Button>
+			<Select.Root type="single" bind:value={genContract}>
+				<Select.Trigger class="h-9 w-56">
+					{genContract ? genContracts.find((c) => c.id === genContract)?.label ?? "All contracts" : "All contracts"}
+				</Select.Trigger>
+				<Select.Content>
+					{#each genContracts as gc}
+						<Select.Item value={gc.id}>{gc.label}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+			<Button onclick={() => generate(selectedMonth)} disabled={generating || !selectedMonth}>{generating ? "Generating…" : `Generate ${selectedMonth}${genContract ? " for selected" : ""}`}</Button>
 		</div>
 	</div>
 
