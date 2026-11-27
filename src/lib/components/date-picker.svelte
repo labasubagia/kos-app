@@ -17,10 +17,9 @@
 	}
 	const ym = (n: number) => String(n).padStart(2, "0");
 
-	let selected = $state<DateValue | undefined>(isoToCal(value));
+	const selected = $derived(isoToCal(value));
 
 	function choose(d: DateValue | undefined) {
-		selected = d;
 		value = d ? `${d.year}-${ym(d.month)}-${ym(d.day)}` : "";
 	}
 
