@@ -18,7 +18,6 @@ export async function pickDate(page: Page, trigger: Locator, date: Date) {
 	await page.keyboard.press("Escape");
 	await expect(cal).toBeHidden();
 }
-
 export async function createLocation(page: Page, name: string) {
 	await page.goto("/locations");
 	await page.getByRole("button", { name: "Add location" }).click();
@@ -145,7 +144,7 @@ export async function seedFixtures(
 		tenant_id: tid,
 		renter_id: rnt.id,
 		room_id: rm.id,
-			start_date: new Date().toISOString().slice(0, 10),
+			start_date: opts.startDate ?? new Date().toISOString().slice(0, 10),
 		monthly_rent: Number(opts.rent),
 	}).select().single();
 	if (ce) throw new Error(`seed: contract: ${ce.message}`);
