@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { refresh, tenant, init } from "$lib/stores/auth.svelte";
 
 	onMount(async () => {
 		await init();
 		await refresh();
-		await goto($tenant ? "/dashboard" : "/create-tenant");
+		await goto($tenant ? base + "/dashboard" : base + "/create-tenant");
 	});
 </script>
 

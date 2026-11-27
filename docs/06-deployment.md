@@ -23,6 +23,11 @@
 - **Prod release**: tag `v*` → GitHub Actions build → GitHub Pages (once prod is active).
 - Protect `main`: required status check + review.
 
+## Prod release (implemented)
+- Workflow `.github/workflows/deploy.yml` handles the prod release: tag `v*` → build → GitHub Pages.
+- App uses `BASE_PATH` env (build-time): empty (root) by default, `/kos-app` in the Pages workflow. All internal links are base-aware via `import.meta.env.BASE_URL`.
+- Repo settings needed: Pages source = GitHub Actions; Actions **variables** `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` (same names `ci.yml` uses).
+
 ## Supabase migrations
 - SQL migrations handled per PR (`supabase db diff`); review before merge. Ensure forward/backward compatibility.
 - Apply via Supabase CLI: `supabase link --project-ref <id>` then `supabase db push` per env.

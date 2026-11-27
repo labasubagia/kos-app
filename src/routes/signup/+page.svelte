@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { supabase } from "$lib/supabase";
+	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { refresh } from "$lib/stores/auth.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import * as Input from "$lib/components/ui/input";
@@ -26,7 +27,7 @@
 		}
 		if (data.session) {
 			await refresh();
-			await goto("/create-tenant");
+			await goto(base + "/create-tenant");
 		} else {
 			toast.success("Check your email for a confirmation link");
 		}
@@ -55,7 +56,7 @@
 			</form>
 		</Card.Content>
 		<Card.Footer class="justify-center">
-			<a href="/login" class="text-sm text-muted-foreground hover:underline">Already have an account? Sign in</a>
+			<a href={base + "/login"} class="text-sm text-muted-foreground hover:underline">Already have an account? Sign in</a>
 		</Card.Footer>
 	</Card.Root>
 </div>

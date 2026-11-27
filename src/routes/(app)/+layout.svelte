@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { Building2, MapPin, Users, FileText, Receipt, Wallet, LayoutDashboard } from "@lucide/svelte";
+	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { tenant, user, requireAuth, signOut } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Avatar, AvatarFallback, AvatarImage } from "$lib/components/ui/avatar";
@@ -18,15 +19,15 @@
 	});
 
 	const nav = [
-		{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-		{ href: "/locations", label: "Locations", icon: MapPin },
-		{ href: "/buildings", label: "Buildings", icon: Building2 },
-		{ href: "/rooms", label: "Rooms", icon: Building2 },
-		{ href: "/renters", label: "Renters", icon: Users },
-		{ href: "/contracts", label: "Contracts", icon: FileText },
-		{ href: "/bills", label: "Bills", icon: Receipt },
-		{ href: "/payments", label: "Payments", icon: Wallet },
-		{ href: "/members", label: "Members", icon: Users, ownerOnly: true },
+		{ href: base + "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+		{ href: base + "/locations", label: "Locations", icon: MapPin },
+		{ href: base + "/buildings", label: "Buildings", icon: Building2 },
+		{ href: base + "/rooms", label: "Rooms", icon: Building2 },
+		{ href: base + "/renters", label: "Renters", icon: Users },
+		{ href: base + "/contracts", label: "Contracts", icon: FileText },
+		{ href: base + "/bills", label: "Bills", icon: Receipt },
+		{ href: base + "/payments", label: "Payments", icon: Wallet },
+		{ href: base + "/members", label: "Members", icon: Users, ownerOnly: true },
 	];
 
 	function initials(email: string | undefined) {

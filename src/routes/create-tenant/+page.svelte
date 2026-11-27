@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { supabase } from "$lib/supabase";
+	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { refresh } from "$lib/stores/auth.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import * as Input from "$lib/components/ui/input";
@@ -24,7 +25,7 @@
 			return;
 		}
 		await refresh();
-		await goto("/dashboard");
+		await goto(base + "/dashboard");
 	}
 </script>
 

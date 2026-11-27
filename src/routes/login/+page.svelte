@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { supabase } from "$lib/supabase";
 	import { refresh, tenant } from "$lib/stores/auth.svelte";
 	import * as Card from "$lib/components/ui/card";
@@ -25,7 +26,7 @@
 			return;
 		}
 		await refresh();
-		await goto($tenant ? "/dashboard" : "/create-tenant");
+		await goto($tenant ? base + "/dashboard" : base + "/create-tenant");
 	}
 </script>
 
@@ -51,7 +52,7 @@
 			</form>
 		</Card.Content>
 		<Card.Footer class="justify-center">
-			<a href="/signup" class="text-sm text-muted-foreground hover:underline">No account? Sign up</a>
+			<a href={base + "/signup"} class="text-sm text-muted-foreground hover:underline">No account? Sign up</a>
 		</Card.Footer>
 	</Card.Root>
 </div>
