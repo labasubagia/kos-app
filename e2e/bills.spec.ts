@@ -72,10 +72,11 @@ test("unpaid bills sort above paid; list defaults to current month", async ({ pa
 
 	// unpaid (renterB) must render above paid (renterA)
 	await page.goto("/bills");
-	const rows = page.locator("tbody tr");
-	await expect(rows.nth(0)).toContainText(renterB);
-	await expect(rows.nth(0).getByText("unpaid")).toBeVisible();
-	await expect(rows.nth(1).getByText("paid")).toBeVisible();
+	const rowA = page.locator("tbody tr", { hasText: renterA });
+	const rowB = page.locator("tbody tr", { hasText: renterB });
+	await expect(rowB.getByText("unpaid")).toBeVisible();
+	await expect(rowA.getByText("paid")).toBeVisible();
+	expect(await rowB.evaluate((el) => el.rowIndex)).toBeLessThan(await rowA.evaluate((el) => el.rowIndex));
 
 	await cleanupArtifacts(await client(), renterA, roomA);
 	await cleanupArtifacts(await client(), renterB, roomB);
