@@ -23,7 +23,7 @@
 
 ## Phase 5 — Hardening & release
 - [x] Client-side input validation + RLS on the DB side.
-- [ ] End-to-end test of check-in → bill → pay → check-out (harness at `supabase/tests/e2e.mjs`; run when a Supabase project is linked).
+- [ ] End-to-end test of check-in → bill → pay → check-out (vitest harness at `tests/integration/billing-flow.test.ts` / `tests/integration/rls-isolation.test.ts`; run when a Supabase project is linked).
 
 ## After release
 - P2 (optional): reminders, then multi-property.
