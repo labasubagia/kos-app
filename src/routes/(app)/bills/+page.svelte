@@ -46,9 +46,9 @@
 
 	const sortedBills = $derived(sortBills(bills));
 
-	async function generate() {
+	async function generate(period: string) {
 		generating = true;
-		const { data, error } = await supabase.rpc("generate_bills");
+		const { data, error } = await supabase.rpc("generate_bills", { p_period: period });
 		generating = false;
 		if (error) {
 			toast.error(error.message);
@@ -70,7 +70,7 @@
 				Period
 				<input type="month" bind:value={selectedMonth} onchange={load} class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground shadow-xs outline-hidden transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50" />
 			</label>
-			<Button onclick={generate} disabled={generating}>{generating ? "Generating…" : "Generate this month"}</Button>
+			<Button onclick={() => generate(selectedMonth)} disabled={generating || !selectedMonth}>{generating ? "Generating…" : `Generate ${selectedMonth}`}</Button>
 		</div>
 	</div>
 
