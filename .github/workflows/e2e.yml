@@ -32,43 +32,6 @@ jobs:
         with:
           version: "^2.20.9"
 
-      - name: Cache Supabase Docker images
-        id: sb-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: /tmp/supabase-images.tar.gz
-          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v2
-
-      - name: Load cached Supabase images
-        if: steps.sb-cache.outputs.cache-hit == 'true'
-        run: gzip -dc /tmp/supabase-images.tar.gz | docker load
-
-      - name: Start local Supabase (Docker)
-        run: |
-          set -euo pipefail
-          for i in $(seq 1 5); do
-            echo "== supabase start attempt $i =="
-            if supabase start; then
-              echo "supabase stack ready"
-              exit 0
-            fi
-            echo "attempt $i failed; retrying in 25s"
-            sleep 25
-          done
-          echo "supabase start failed after 5 attempts" >&2
-          exit 1
-
-      - name: Save Supabase Docker images
-        if: steps.sb-cache.outputs.cache-hit != 'true'
-        run: |
-          docker save $(docker ps -aq --format '{{.Image}}' | sort -u) | gzip > /tmp/supabase-images.tar.gz
-
-      - name: Commit Supabase image cache
-        if: steps.sb-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: /tmp/supabase-images.tar.gz
-          key: supabase-docker-${{ hashFiles('supabase/config.toml') }}-v2
 
       - name: Capture local Supabase endpoints
         id: sb
