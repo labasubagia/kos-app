@@ -1,15 +1,15 @@
 import { test, type Locator, type Page } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { E2E_EMAIL, E2E_PASS, hasCreds } from "../tests/support/db";
+import { E2E_EMAIL, E2E_PASS, hasCreds } from "../../tests/support/db";
 
 /**
  * Skip locally when credentials are absent, but fail loudly in CI so a PR
  * never goes green on silently-skipped coverage.
  */
 export function ensureCreds(): void {
-	if (hasCreds()) return;
-	if (process.env.CI) throw new Error("E2E credentials not set (E2E_EMAIL/E2E_PASS)");
-	test.skip(true, "E2E credentials not set");
+  if (hasCreds()) return;
+  if (process.env.CI) throw new Error("E2E credentials not set (E2E_EMAIL/E2E_PASS)");
+  test.skip(true, "E2E credentials not set");
 }
 
 /**
@@ -65,7 +65,11 @@ export async function fillByLabel(page: Page, text: string, value: string): Prom
   await (await fieldControl(page, text)).fill(value);
 }
 
-export async function selectOption(page: Page, labelText: string, optionText: string): Promise<void> {
+export async function selectOption(
+  page: Page,
+  labelText: string,
+  optionText: string,
+): Promise<void> {
   const control = await fieldControl(page, labelText);
   await control.click();
   await page.locator("[role=option]", { hasText: optionText }).first().click();
@@ -100,7 +104,14 @@ export async function cleanupArtifacts(
   }
 
   const { data: rooms } = await c.from("rooms").select("id").eq("name", roomName);
-  if (rooms?.length) await c.from("rooms").delete().in("id", rooms.map((x) => x.id));
+  if (rooms?.length)
+    await c
+      .from("rooms")
+      .delete()
+      .in(
+        "id",
+        rooms.map((x) => x.id),
+      );
 
   await c.from("renters").delete().in("id", renterIds);
 }

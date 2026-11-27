@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureCreds, login } from "./harness";
+import { ensureCreds, login } from "./support/harness";
 
 ensureCreds();
 
