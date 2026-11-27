@@ -5,6 +5,7 @@
 	import { downloadCsv, toCsv, todayStamp, type CsvCell } from "$lib/csv";
 	import { tenant } from "$lib/stores/auth.svelte.ts";
 	import { Separator } from "$lib/components/ui/separator";
+	import DatePicker from "$lib/components/date-picker.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import * as Table from "$lib/components/ui/table";
 	import * as Dialog from "$lib/components/ui/dialog";
@@ -218,7 +219,10 @@
 				<div class="grid gap-2">
 					<Label.Root>Contract</Label.Root>
 					<Select.Root type="single" bind:value={payContract}>
-						<Select.Trigger class="w-full"><Select.Value placeholder="Select contract with balance" /></Select.Trigger>
+						<Select.Trigger class="w-full">
+							{@const sel = contracts.find((x) => x.id === payContract)}
+							{sel ? `${sel.label} — ${idr(sel.outstanding)}` : "Select contract with balance"}
+						</Select.Trigger>
 						<Select.Content>
 							{#each contracts as c}
 								<Select.Item value={c.id}>{c.label} — {idr(c.outstanding)}</Select.Item>
@@ -245,7 +249,7 @@
 				<div class="grid grid-cols-2 gap-4">
 					<div class="grid gap-2">
 						<Label.Root>Date</Label.Root>
-						<Input.Root type="date" bind:value={payDate} />
+						<DatePicker bind:value={payDate} placeholder="Select payment date" />
 					</div>
 					<div class="grid gap-2">
 						<Label.Root>Notes (optional)</Label.Root>

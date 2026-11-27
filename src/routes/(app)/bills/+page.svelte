@@ -13,6 +13,7 @@
 		amount: number;
 		due_date: string;
 		status: "unpaid" | "partial" | "paid";
+		payments: { amount: number }[] | null;
 		contracts: {
 			start_date: string;
 			end_date: string | null;
@@ -28,12 +29,13 @@
 	let loading = $state(true);
 	let generating = $state(false);
 	const idr = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
-
+	const paidOf = (b: Bill) => b.payments?.reduce((s, p) => s + Number(p.amount), 0) ?? 0;
+	const balanceOf = (b: Bill) => b.amount - paidOf(b);
 	async function load() {
 		loading = true;
 		const { data } = await supabase
 			.from("bills")
-			.select("*, contracts!inner(rooms(name), renters(name))")
+			.select("*, payments(amount), contracts!inner(rooms(name), renters(name))")
 			.order("period", { ascending: false })
 			.order("due_date", { ascending: true });
 		bills = (data ?? []) as Bill[];
@@ -74,6 +76,8 @@
 						<Table.Head>Room</Table.Head>
 						<Table.Head>Due</Table.Head>
 						<Table.Head class="text-right">Amount</Table.Head>
+						<Table.Head class="text-right">Paid</Table.Head>
+						<Table.Head class="text-right">Balance</Table.Head>
 						<Table.Head>Status</Table.Head>
 					</Table.Row>
 				</Table.Header>
@@ -85,13 +89,15 @@
 							<Table.Cell>{b.contracts.rooms.name}</Table.Cell>
 							<Table.Cell>{b.due_date}</Table.Cell>
 							<Table.Cell class="text-right">{idr(b.amount)}</Table.Cell>
+							<Table.Cell class="text-right">{idr(paidOf(b))}</Table.Cell>
+							<Table.Cell class="text-right">{idr(balanceOf(b))}</Table.Cell>
 							<Table.Cell>
 								<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
 							</Table.Cell>
 						</Table.Row>
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={6} class="py-8 text-center text-muted-foreground">No bills yet — generate this month</Table.Cell>
+							<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No bills yet — generate this month</Table.Cell>
 						</Table.Row>
 					{/each}
 				</Table.Body>
