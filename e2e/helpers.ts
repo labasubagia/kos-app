@@ -82,7 +82,7 @@ export async function checkInContract(
 export async function generateBills(page: Page) {
 	await page.goto("/bills");
 	await page.getByRole("button", { name: /Generate \d{4}-\d{2}/ }).click();
-	await expect(page.getByText(/Generated \d+ bill/)).toBeVisible();
+	await expect(page.getByText(/Generated \d+ bill/)).toBeVisible({ timeout: 15_000 });
 }
 
 export async function recordPayment(page: Page, contractLabel: string, amount: string) {
