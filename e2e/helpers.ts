@@ -129,6 +129,8 @@ export async function seedFixtures(
 	c: SupabaseClient,
 	opts: { location: string; building: string; room: string; renter: string; rent: string; startDate?: string },
 ): Promise<{ renterId: string; roomId: string; contractId: string }> {
+	const { data: member, error: me } = await c.from("memberships").select("tenant_id").limit(1).single();
+	if (me || !member) throw new Error(`seed: cannot resolve tenant: ${me?.message ?? "no membership"}`);
 	const tid = member.tenant_id;
 
 	const { data: loc, error: le } = await c.from("locations").insert({ tenant_id: tid, name: opts.location }).select().single();
