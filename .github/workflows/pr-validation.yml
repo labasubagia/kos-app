@@ -24,16 +24,11 @@ jobs:
             ];
 
             // Heading may be followed by a description in parentheses (e.g. "Description")
-            const has = (h) => new RegExp(`^##\\s+${h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m").test(body);
+            const has = (h) => new RegExp(`^##\s+${h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m").test(body);
             const missing = required.filter((h) => !has(h));
 
             const prNumber = context.payload.pull_request.number;
 
             if (missing.length) {
-              await github.rest.issues.createComment({
-                ...context.repo,
-                issue_number: prNumber,
-                body: `⚠️ PR does not match the template. Missing sections: ${missing.join(", ")}. Please fill them in.`,
-              });
               core.setFailed(`PR does not match template. Missing sections: ${missing.join(", ")}`);
             }
