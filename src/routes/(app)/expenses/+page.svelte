@@ -22,7 +22,8 @@
 		DialogTitle
 	} from "$lib/components/ui/dialog/index.js";
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "$lib/components/ui/table/index.js";
-	import DatePicker from "$lib/components/date-picker.svelte";
+import { Skeleton } from "$lib/components/ui/skeleton";
+ import DatePicker from "$lib/components/date-picker.svelte";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Pencil, Trash2, Plus } from "@lucide/svelte";
 	import { formatIDR } from "$lib/logic/bills";
@@ -172,8 +173,23 @@
 		<Button onclick={openCreate}><Plus class="h-4 w-4" /> Add expense</Button>
 	</div>
 
-	<div class="rounded-lg border">
-		{#if loading}
+		<div class="rounded-lg border">
+			{#if loading}
+				<Table>
+					<TableBody>
+						{#each [1, 2, 3] as _}
+							<TableRow>
+								<TableCell><Skeleton class="h-4 w-20" /></TableCell>
+								<TableCell><Skeleton class="h-4 w-24" /></TableCell>
+								<TableCell><Skeleton class="h-4 w-32" /></TableCell>
+								<TableCell class="text-right"><Skeleton class="h-4 w-24" /></TableCell>
+								<TableCell><Skeleton class="h-4 w-28" /></TableCell>
+								<TableCell class="text-right"><Skeleton class="h-4 w-16" /></TableCell>
+							</TableRow>
+						{/each}
+					</TableBody>
+				</Table>
+			{:else if expenses.length === 0}
 			<p class="text-sm text-muted-foreground p-4">Loading…</p>
 		{:else if expenses.length === 0}
 			<p class="text-sm text-muted-foreground p-4">No expenses yet. Use "Add expense" to record one.</p>
