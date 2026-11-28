@@ -24,7 +24,7 @@ jobs:
             ];
 
             // Heading may be followed by a description in parentheses (e.g. "Description")
-            const has = (h) => new RegExp(`^##\s+${h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m").test(body);
+            const has = (h) => new RegExp(`^##\\s+${h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m").test(body);
             const missing = required.filter((h) => !has(h));
 
             const prNumber = context.payload.pull_request.number;
