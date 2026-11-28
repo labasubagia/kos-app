@@ -2,7 +2,8 @@
 	import { onMount } from "svelte";
 	import { deleteBill, generateBills, listActiveContractOptions, listBillsForMonth } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
-	import * as Popover from "$lib/components/ui/popover";
+import { Skeleton } from "$lib/components/ui/skeleton";
+ import * as Popover from "$lib/components/ui/popover";
 	import * as Select from "$lib/components/ui/select";
 	import { CalendarDate } from "@internationalized/date";
 	import { Button } from "$lib/components/ui/button";
@@ -150,46 +151,66 @@
 	</div>
 
 	<div class="rounded-lg border">
-		<Table.Root>
-			<Table.Header>
-				<Table.Row>
-					<Table.Head>Period</Table.Head>
-					<Table.Head>Renter</Table.Head>
-					<Table.Head>Room</Table.Head>
-					<Table.Head>Due</Table.Head>
-					<Table.Head class="text-right">Amount</Table.Head>
-					<Table.Head class="text-right">Paid</Table.Head>
-					<Table.Head class="text-right">Balance</Table.Head>
-					<Table.Head>Status</Table.Head>
-					<Table.Head class="text-right">Actions</Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
-				{#each sortedBills as b (b.id)}
+		{#if loading}
+			<Table.Root>
+				<Table.Body>
+					{#each [1, 2, 3] as _}
+						<Table.Row>
+							<Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-24" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-24" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-24" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-24" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-16" /></Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		{:else}
+			<Table.Root>
+				<Table.Header>
 					<Table.Row>
-						<Table.Cell class="font-mono">{b.period}</Table.Cell>
-						<Table.Cell>{b.contracts.renters.name}</Table.Cell>
-						<Table.Cell>{b.contracts.rooms.name}</Table.Cell>
-						<Table.Cell>{b.due_date}</Table.Cell>
-						<Table.Cell class="text-right">{formatIDR(b.amount)}</Table.Cell>
-						<Table.Cell class="text-right">{formatIDR(totalPaid(b.payments))}</Table.Cell>
-						<Table.Cell class="text-right">{formatIDR(balanceOf(b.amount, b.payments))}</Table.Cell>
-						<Table.Cell>
-							<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
-						</Table.Cell>
-						<Table.Cell class="text-right">
-							<Button size="sm" variant="ghost" aria-label={`Delete bill ${b.period}`} onclick={() => (constBill = b)}>
-								<Trash2 class="h-4 w-4" />
-							</Button>
-						</Table.Cell>
+						<Table.Head>Period</Table.Head>
+						<Table.Head>Renter</Table.Head>
+						<Table.Head>Room</Table.Head>
+						<Table.Head>Due</Table.Head>
+						<Table.Head class="text-right">Amount</Table.Head>
+						<Table.Head class="text-right">Paid</Table.Head>
+						<Table.Head class="text-right">Balance</Table.Head>
+						<Table.Head>Status</Table.Head>
+						<Table.Head class="text-right">Actions</Table.Head>
 					</Table.Row>
-				{:else}
-					<Table.Row>
-						<Table.Cell colspan={9} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
-					</Table.Row>
-				{/each}
-			</Table.Body>
-		</Table.Root>
+				</Table.Header>
+				<Table.Body>
+					{#each sortedBills as b (b.id)}
+						<Table.Row>
+							<Table.Cell class="font-mono">{b.period}</Table.Cell>
+							<Table.Cell>{b.contracts.renters.name}</Table.Cell>
+							<Table.Cell>{b.contracts.rooms.name}</Table.Cell>
+							<Table.Cell>{b.due_date}</Table.Cell>
+							<Table.Cell class="text-right">{formatIDR(b.amount)}</Table.Cell>
+							<Table.Cell class="text-right">{formatIDR(totalPaid(b.payments))}</Table.Cell>
+							<Table.Cell class="text-right">{formatIDR(balanceOf(b.amount, b.payments))}</Table.Cell>
+							<Table.Cell>
+								<Badge variant={statusVariant[b.status]} class="capitalize">{b.status}</Badge>
+							</Table.Cell>
+							<Table.Cell class="text-right">
+								<Button size="sm" variant="ghost" aria-label={`Delete bill ${b.period}`} onclick={() => (constBill = b)}>
+									<Trash2 class="h-4 w-4" />
+								</Button>
+							</Table.Cell>
+						</Table.Row>
+					{:else}
+						<Table.Row>
+							<Table.Cell colspan={9} class="py-8 text-center text-muted-foreground">No bills yet for {selectedMonth}</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+				</Table.Root>
+			{/if}
 		<Dialog.Root open={constBill !== null} onOpenChange={(o) => { if (!o) constBill = null; }}>
 			<Dialog.Content class="sm:max-w-sm">
 				<Dialog.Header>

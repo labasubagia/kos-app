@@ -7,7 +7,8 @@
 	import { Separator } from "$lib/components/ui/separator";
 	import DatePicker from "$lib/components/date-picker.svelte";
 	import * as Table from "$lib/components/ui/table";
-	import * as Dialog from "$lib/components/ui/dialog";
+import { Skeleton } from "$lib/components/ui/skeleton";
+ import * as Dialog from "$lib/components/ui/dialog";
 	import * as Input from "$lib/components/ui/input";
 	import * as Label from "$lib/components/ui/label";
 	import * as Select from "$lib/components/ui/select";
@@ -169,40 +170,54 @@
 	</div>
 
 	<div class="rounded-lg border">
-		<Table.Root>
-			<Table.Header>
-				<Table.Row>
-					<Table.Head>Date</Table.Head>
-					<Table.Head>Renter</Table.Head>
-					<Table.Head>Room</Table.Head>
-					<Table.Head>Period</Table.Head>
-					<Table.Head>Method</Table.Head>
-					<Table.Head class="text-right">Amount</Table.Head>
-					<Table.Head class="w-16"></Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
-				{#each payments as pm (pm.id)}
+		{#if loading}
+			<Table.Root>
+				<Table.Body>
+					{#each [1, 2, 3] as _}
+						<Table.Row>
+							<Table.Cell><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-24" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell class="w-16 text-right"><Skeleton class="h-4 w-8" /></Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		{:else}
+			<Table.Root>
+				<Table.Header>
 					<Table.Row>
-						<Table.Cell>{pm.date}</Table.Cell>
-						<Table.Cell>{pm.bills.contracts.renters.name}</Table.Cell>
-						<Table.Cell>{pm.bills.contracts.rooms.name}</Table.Cell>
-						<Table.Cell class="font-mono">{pm.bills.period}</Table.Cell>
-						<Table.Cell class="capitalize">{pm.method}</Table.Cell>
-						<Table.Cell class="text-right">{idr(pm.amount)}</Table.Cell>
-						<Table.Cell class="text-right">
-							<Button variant="ghost" size="sm" onclick={() => openReceipt(pm)} title="Receipt">
-								<Receipt class="h-4 w-4" />
-							</Button>
-						</Table.Cell>
+						<Table.Head>Date</Table.Head>
+						<Table.Head>Renter</Table.Head>
+						<Table.Head>Room</Table.Head>
+						<Table.Head>Period</Table.Head>
+						<Table.Head>Method</Table.Head>
+						<Table.Head class="text-right">Amount</Table.Head>
+						<Table.Head class="w-16"></Table.Head>
 					</Table.Row>
-				{:else}
-					<Table.Row>
-						<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">No payments yet</Table.Cell>
-					</Table.Row>
-				{/each}
-			</Table.Body>
-		</Table.Root>
+				</Table.Header>
+				<Table.Body>
+					{#each payments as pm (pm.id)}
+						<Table.Row>
+							<Table.Cell>{pm.date}</Table.Cell>
+							<Table.Cell>{pm.bills.contracts.renters.name}</Table.Cell>
+							<Table.Cell>{pm.bills.contracts.rooms.name}</Table.Cell>
+							<Table.Cell class="font-mono">{pm.bills.period}</Table.Cell>
+							<Table.Cell class="capitalize">{pm.method}</Table.Cell>
+							<Table.Cell class="text-right">{idr(pm.amount)}</Table.Cell>
+							<Table.Cell class="text-right">
+								<Button variant="ghost" size="sm" onclick={() => openReceipt(pm)} title="Receipt">
+									<Receipt class="h-4 w-4" />
+								</Button>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		{/if}
 	</div>
 
 	<Dialog.Root bind:open={openPay}>

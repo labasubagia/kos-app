@@ -2,7 +2,8 @@
 	import { onMount } from "svelte";
 	import { checkInContract, checkOutContract, extendContract, listAvailableRooms, listContracts, listRenters } from "$lib/db";
 	import * as Table from "$lib/components/ui/table";
-	import * as Dialog from "$lib/components/ui/dialog";
+import { Skeleton } from "$lib/components/ui/skeleton";
+ import * as Dialog from "$lib/components/ui/dialog";
 	import * as Input from "$lib/components/ui/input";
 	import * as Label from "$lib/components/ui/label";
 	import * as Select from "$lib/components/ui/select";
@@ -183,7 +184,25 @@
 		<Button onclick={() => { resetCheckIn(); openCheckIn = true; }}>Check-in</Button>
 	</div>
 
-<div class="rounded-lg border">
+	<div class="rounded-lg border">
+		{#if loading}
+			<Table.Root>
+				<Table.Body>
+					{#each [1, 2, 3] as _}
+						<Table.Row>
+							<Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-20" /></Table.Cell>
+							<Table.Cell><Skeleton class="h-4 w-16" /></Table.Cell>
+							<Table.Cell class="text-right"><Skeleton class="h-4 w-20" /></Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		{:else}
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
@@ -220,13 +239,10 @@
 								{/if}
 							</Table.Cell>
 						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">No contracts yet</Table.Cell>
-						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>
+		{/if}
 </div>
 
 	<!-- Check-in dialog -->

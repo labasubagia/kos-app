@@ -8,8 +8,9 @@
 	import * as Input from "$lib/components/ui/input";
 	import * as Label from "$lib/components/ui/label";
 	import * as Table from "$lib/components/ui/table";
-	import { Button } from "$lib/components/ui/button";
-	import { Badge } from "$lib/components/ui/badge";
+import { Skeleton } from "$lib/components/ui/skeleton";
+import { Badge } from "$lib/components/ui/badge";
+ import { Button } from "$lib/components/ui/button";
 	import { toast } from "svelte-sonner";
 	import { Trash2, UserPlus } from "@lucide/svelte";
 
@@ -106,7 +107,28 @@
 			{/if}
 
 			{#if loading}
-				<div class="py-8 text-center text-sm text-muted-foreground">Loading members…</div>
+				<Table.Root>
+					<Table.Header>
+						<Table.Row>
+							<Table.Head>Email</Table.Head>
+							<Table.Head>Role</Table.Head>
+							{#if isOwner}
+								<Table.Head class="w-16 text-right">Actions</Table.Head>
+							{/if}
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each [1, 2, 3] as _}
+							<Table.Row>
+								<Table.Cell><Skeleton class="h-4 w-48" /></Table.Cell>
+								<Table.Cell><Skeleton class="h-4 w-20" /></Table.Cell>
+								{#if isOwner}
+									<Table.Cell class="w-16 text-right"><Skeleton class="h-4 w-16" /></Table.Cell>
+								{/if}
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
 			{:else if members.length === 0}
 				<div class="py-8 text-center text-sm text-muted-foreground">No members yet.</div>
 			{:else}

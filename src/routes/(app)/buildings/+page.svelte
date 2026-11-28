@@ -14,7 +14,8 @@
 		TableHeader,
 		TableRow
 	} from "$lib/components/ui/table/index.js";
-	import {
+import { Skeleton } from "$lib/components/ui/skeleton";
+ import {
 		Dialog,
 		DialogContent,
 		DialogDescription,
@@ -158,9 +159,19 @@
 
 	<div class="rounded-lg border">
 		{#if loading}
-			<p class="text-sm text-muted-foreground">Loading…</p>
+			<Table>
+				<TableBody>
+					{#each [1, 2, 3] as _}
+						<TableRow>
+							<TableCell><Skeleton class="h-4 w-32" /></TableCell>
+							<TableCell><Skeleton class="h-4 w-28" /></TableCell>
+							<TableCell class="text-right"><Skeleton class="h-4 w-16" /></TableCell>
+						</TableRow>
+					{/each}
+				</TableBody>
+			</Table>
 		{:else if buildings.length === 0}
-			<p class="text-sm text-muted-foreground">No buildings yet. Use "Add building" to create one.</p>
+			<p class="text-sm text-muted-foreground">No buildings yet. Use "Add building" create one.</p>
 		{:else}
 			<Table>
 				<TableHeader>
