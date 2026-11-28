@@ -10,6 +10,8 @@
 	import { toast } from "svelte-sonner";
 	import { Save, Loader2 } from "@lucide/svelte";
 
+	const MAX_NAME_LENGTH = 255;
+
 	let formName = $state("");
 	let saving = $state(false);
 
@@ -27,6 +29,10 @@
 		const name = formName.trim();
 		if (!name) {
 			toast.error("Name required");
+			return;
+		}
+		if (name.length > MAX_NAME_LENGTH) {
+			toast.error(`Name too long (max ${MAX_NAME_LENGTH} characters)`);
 			return;
 		}
 		if (name === $tenant?.tenantName) {
@@ -67,7 +73,7 @@
 		<Card.Content class="space-y-4">
 			<div class="grid gap-2">
 				<Label.Root for="name">Workspace name</Label.Root>
-				<Input.Root id="name" bind:value={formName} placeholder="Enter workspace name" disabled={saving} />
+				<Input.Root id="name" bind:value={formName} placeholder="Enter workspace name" disabled={saving} maxlength={MAX_NAME_LENGTH} />
 			</div>
 			<Separator.Root />
 			<Button onclick={save} disabled={saving}>
