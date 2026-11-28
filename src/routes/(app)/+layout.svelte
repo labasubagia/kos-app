@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
-	import { Building2, MapPin, Users, FileText, Receipt, Wallet, LayoutDashboard, CircleDollarSign } from "@lucide/svelte";
+	import { Building2, MapPin, Users, FileText, Receipt, Wallet, LayoutDashboard, CircleDollarSign, Settings } from "@lucide/svelte";
 	const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 	import { tenant, user, requireAuth, signOut } from "$lib/stores/auth.svelte";
 	import { Button } from "$lib/components/ui/button";
@@ -28,6 +28,7 @@
 		{ href: base + "/bills", label: "Bills", icon: Receipt },
 		{ href: base + "/payments", label: "Payments", icon: Wallet },
 		{ href: base + "/expenses", label: "Expenses", icon: CircleDollarSign },
+		{ href: base + "/settings", label: "Settings", icon: Settings, ownerOnly: true },
 	];
 
 	function initials(email: string | undefined) {

@@ -158,3 +158,6 @@ export const createRenter = (payload: Record<string, unknown>) =>
 export const updateRenter = (id: string, payload: Record<string, unknown>) =>
 	supabase.from("renters").update(payload).eq("id", id).select().single();
 export const removeRenter = (id: string) => supabase.from("renters").delete().eq("id", id);
+// ---- tenant ----
+export const updateTenant = (tenantId: string, payload: { name: string }) =>
+	supabase.from("tenants").update(payload).eq("id", tenantId);
