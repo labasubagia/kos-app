@@ -21,3 +21,4 @@ Adds edit workspace feature: owners can rename their workspace/tenant via a Sett
 - [x] Self-reviewed
 - [x] No breaking changes
 - [x] Related issue linked (fixes #67)
+
